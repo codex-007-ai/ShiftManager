@@ -1,113 +1,114 @@
 /* ============================================================
    ShiftSnap — script.js
    Daily factory shift allotment — pure frontend (no backend).
-   State lives in localStorage; the notice is exported with html2canvas.
+   State lives in localStorage; the receipt is exported with
+   html2canvas and shared natively via the Web Share API.
    ============================================================ */
 
 /* -------------------- Constants -------------------- */
 
 const LS = {
-  employees:'ss_employees', lang:'ss_lang', company:'ss_company',
-  department:'ss_department', tagline:'ss_tagline', logo:'ss_logo',
-  allotter:'ss_allotter', designation:'ss_designation',
-  assignments:'ss_assignments', notes:'ss_notes', date:'ss_date',
-  history:'ss_history'
+  employees: 'ss_employees', lang: 'ss_lang', company: 'ss_company',
+  department: 'ss_department', tagline: 'ss_tagline', logo: 'ss_logo',
+  allotter: 'ss_allotter', designation: 'ss_designation',
+  assignments: 'ss_assignments', notes: 'ss_notes', date: 'ss_date',
+  history: 'ss_history'
 };
 
-const DEFAULT_EMPLOYEES = ['Bhushan','Ramesh','Nagu','Gangaraju','Prasad',
-  'Srinu','Venkatrao','Rajkumar','Naidu','Trinadh'];
+const DEFAULT_EMPLOYEES = ['Bhushan', 'Ramesh', 'Nagu', 'Gangaraju', 'Prasad',
+  'Srinu', 'Venkatrao', 'Rajkumar', 'Naidu', 'Trinadh'];
 
 const SHIFTS = [
-  { id:'a',  key:'shiftA',   color:'var(--blue)'   },
-  { id:'b',  key:'shiftB',   color:'var(--green)'  },
-  { id:'c',  key:'shiftC',   color:'var(--orange)' },
-  { id:'g',  key:'shiftG',   color:'var(--purple)' },
-  { id:'wo', key:'weeklyOff',color:'var(--gray)'   },
-  { id:'lv', key:'leave',    color:'var(--red)'    }
+  { id: 'a',  key: 'shiftA',    color: 'var(--blue)'   },
+  { id: 'b',  key: 'shiftB',    color: 'var(--green)'  },
+  { id: 'c',  key: 'shiftC',    color: 'var(--orange)' },
+  { id: 'g',  key: 'shiftG',    color: 'var(--purple)' },
+  { id: 'wo', key: 'weeklyOff', color: 'var(--gray)'   },
+  { id: 'lv', key: 'leave',     color: 'var(--red)'    }
 ];
 const NA = 'na'; // "Not Assigned"
-const SHORT = { a:'A', b:'B', c:'C', g:'G', wo:'W/O', lv:'LV' };
+const SHORT = { a: 'A', b: 'B', c: 'C', g: 'G', wo: 'W/O', lv: 'LV' };
 
 /* -------------------- i18n dictionary -------------------- */
 
 const I18N = {
   en: {
-    app:'ShiftSnap',
-    tagline:'QUALITY • HYGIENE • TRUST',
-    allot:'Allot', employees:'Employees', settings:'Settings', history:'History',
-    date:'Date', copyYesterday:'Copy Yesterday', notes:'Notes (optional)',
-    notesPh:'Maintenance activity, cleaning work, special instructions…',
-    assignments:'Shift Assignments', shiftSummary:'Shift Summary',
-    preview:'Notice Preview', exportPng:'Export PNG', copyText:'Copy Text',
-    saveToHistory:'Save to History', addEmployee:'Add Employee',
-    empNamePh:'Employee name', edit:'Edit', delete:'Delete', save:'Save Settings',
-    cancel:'Cancel', notAssigned:'Not Assigned',
-    shiftA:'A Shift', shiftB:'B Shift', shiftC:'C Shift', shiftG:'G Shift',
-    weeklyOff:'Weekly Off', leave:'Leave',
-    companySettings:'Company Settings', companyName:'Company Name',
-    department:'Department Name', taglineLbl:'Tagline', allotter:'Allotter Name',
-    designation:'Designation', logo:'Company Logo', uploadLogo:'Upload Logo',
-    removeLogo:'Remove Logo',
-    noticeTitle:'SHIFT ALLOTMENT NOTICE', dateLbl:'DATE',
-    allottedBy:'ALLOTTED BY', generatedAt:'GENERATED AT', notesLbl:'NOTES',
-    today:'Today', yesterday:'Yesterday', older:'Older Records',
-    view:'View', load:'Load', reuse:'Reuse', close:'Close', export:'Export PNG',
-    noEmployees:'No employees yet. Add some first.',
-    noHistory:'No saved schedules yet. Save one from the Allot tab.',
-    copied:'Copied to clipboard', loaded:'Schedule loaded',
-    noPrev:'No previous schedule found', savedToHistory:'Saved to history',
-    settingsSaved:'Settings saved', logoRemoved:'Logo removed',
-    added:'Added', updated:'Updated', removed:'Removed',
-    confirmDelete:'Delete this employee?', historyView:'Saved Schedule',
-    empty:'—'
+    app: 'ShiftSnap',
+    tagline: 'QUALITY • HYGIENE • TRUST',
+    allot: 'Allot', employees: 'Employees', settings: 'Settings', history: 'History',
+    date: 'Date', copyYesterday: 'Copy Yesterday', notes: 'Notes (optional)',
+    notesPh: 'Maintenance activity, cleaning work, special instructions…',
+    assignments: 'Shift Assignments', shiftSummary: 'Shift Summary',
+    preview: 'Receipt Preview', exportPng: 'Export PNG', copyText: 'Copy Text',
+    saveToHistory: 'Save to History', share: 'Share', shareText: 'Shift Allotment',
+    addEmployee: 'Add Employee', empNamePh: 'Employee name',
+    edit: 'Edit', delete: 'Delete', save: 'Save Settings', cancel: 'Cancel',
+    notAssigned: 'Not Assigned',
+    shiftA: 'A Shift', shiftB: 'B Shift', shiftC: 'C Shift', shiftG: 'G Shift',
+    weeklyOff: 'Weekly Off', leave: 'Leave',
+    companySettings: 'Company Settings', companyName: 'Company Name',
+    department: 'Department Name', taglineLbl: 'Tagline', allotter: 'Allotter Name',
+    designation: 'Designation', logo: 'Company Logo', uploadLogo: 'Upload Logo',
+    removeLogo: 'Remove Logo',
+    noticeTitle: 'SHIFT ALLOTMENT', dateLbl: 'DATE',
+    allottedBy: 'ALLOTTED BY', generatedAt: 'GENERATED AT', notesLbl: 'NOTES',
+    today: 'Today', yesterday: 'Yesterday', older: 'Older Records',
+    view: 'View', load: 'Load', reuse: 'Reuse', close: 'Close', export: 'Export PNG',
+    noEmployees: 'No employees yet. Add some first.',
+    noHistory: 'No saved schedules yet. Save one from the Allot tab.',
+    copied: 'Copied to clipboard', loaded: 'Schedule loaded',
+    noPrev: 'No previous schedule found', savedToHistory: 'Saved to history',
+    settingsSaved: 'Settings saved', logoRemoved: 'Logo removed',
+    added: 'Added', updated: 'Updated', removed: 'Removed',
+    confirmDelete: 'Delete this employee?', historyView: 'Saved Schedule'
   },
   te: {
-    app:'ShiftSnap',
-    tagline:'నాణ్యత • పరిశుభ్రత • విశ్వాసం',
-    allot:'కేటాయింపు', employees:'ఉద్యోగులు', settings:'సెట్టింగ్స్', history:'చరిత్ర',
-    date:'తేదీ', copyYesterday:'నిన్నటి కాపీ', notes:'గమనికలు (ఐచ్ఛికం)',
-    notesPh:'నిర్వహణ పనులు, శుభ్రపరచడం, ప్రత్యేక సూచనలు…',
-    assignments:'షిఫ్ట్ కేటాయింపులు', shiftSummary:'షిఫ్ట్ సారాంశం',
-    preview:'నోటీస్ ప్రివ్యూ', exportPng:'PNG డౌన్లోడ్', copyText:'టెక్స్ట్ కాపీ',
-    saveToHistory:'చరిత్రలో సేవ్', addEmployee:'ఉద్యోగిని జోడించండి',
-    empNamePh:'ఉద్యోగి పేరు', edit:'మార్చండి', delete:'తొలగించండి', save:'సేవ్ చేయండి',
-    cancel:'రద్దు', notAssigned:'కేటాయించలేదు',
-    shiftA:'ఎ షిఫ్ట్', shiftB:'బి షిఫ్ట్', shiftC:'సి షిఫ్ట్', shiftG:'జి షిఫ్ట్',
-    weeklyOff:'వీక్లీ ఆఫ్', leave:'సెలవు',
-    companySettings:'కంపెనీ సెట్టింగ్స్', companyName:'కంపెనీ పేరు',
-    department:'డిపార్ట్మెంట్ పేరు', taglineLbl:'ట్యాగ్లైన్', allotter:'కేటాయించే వ్యక్తి',
-    designation:'హోదా', logo:'కంపెనీ లోగో', uploadLogo:'లోగో అప్లోడ్ చేయండి',
-    removeLogo:'లోగో తొలగించండి',
-    noticeTitle:'షిఫ్ట్ కేటాయింపు నోటీసు', dateLbl:'తేదీ',
-    allottedBy:'కేటాయించిన వారు', generatedAt:'తయారైన సమయం', notesLbl:'గమనికలు',
-    today:'ఈరోజు', yesterday:'నిన్న', older:'పాత రికార్డులు',
-    view:'చూడండి', load:'లోడ్', reuse:'మళ్లీ ఉపయోగించండి', close:'మూసివేయండి', export:'PNG ఎగుమతి',
-    noEmployees:'ఇంకా ఉద్యోగులు లేరు. ముందుగా జోడించండి.',
-    noHistory:'ఇంకా సేవ్ చేసిన షెడ్యూల్ లేదు.',
-    copied:'క్లిప్బోర్డ్కు కాపీ అయింది', loaded:'షెడ్యూల్ లోడ్ అయింది',
-    noPrev:'మునుపటి షెడ్యూల్ కనుగొనబడలేదు', savedToHistory:'చరిత్రలో సేవ్ అయింది',
-    settingsSaved:'సెట్టింగ్స్ సేవ్ అయ్యాయి', logoRemoved:'లోగో తొలగించబడింది',
-    added:'జోడించబడింది', updated:'నవీకరించబడింది', removed:'తొలగించబడింది',
-    confirmDelete:'ఈ ఉద్యోగిని తొలగించాలా?', historyView:'సేవ్ చేసిన షెడ్యూల్',
-    empty:'—'
+    app: 'ShiftSnap',
+    tagline: 'నాణ్యత • పరిశుభ్రత • విశ్వాసం',
+    allot: 'కేటాయింపు', employees: 'ఉద్యోగులు', settings: 'సెట్టింగ్స్', history: 'చరిత్ర',
+    date: 'తేదీ', copyYesterday: 'నిన్నటి కాపీ', notes: 'గమనికలు (ఐచ్ఛికం)',
+    notesPh: 'నిర్వహణ పనులు, శుభ్రపరచడం, ప్రత్యేక సూచనలు…',
+    assignments: 'షిఫ్ట్ కేటాయింపులు', shiftSummary: 'షిఫ్ట్ సారాంశం',
+    preview: 'రసీదు ప్రివ్యూ', exportPng: 'PNG డౌన్లోడ్', copyText: 'టెక్స్ట్ కాపీ',
+    saveToHistory: 'చరిత్రలో సేవ్', share: 'షేర్', shareText: 'షిఫ్ట్ కేటాయింపు',
+    addEmployee: 'ఉద్యోగిని జోడించండి', empNamePh: 'ఉద్యోగి పేరు',
+    edit: 'మార్చండి', delete: 'తొలగించండి', save: 'సేవ్ చేయండి', cancel: 'రద్దు',
+    notAssigned: 'కేటాయించలేదు',
+    shiftA: 'ఎ షిఫ్ట్', shiftB: 'బి షిఫ్ట్', shiftC: 'సి షిఫ్ట్', shiftG: 'జి షిఫ్ట్',
+    weeklyOff: 'వీక్లీ ఆఫ్', leave: 'సెలవు',
+    companySettings: 'కంపెనీ సెట్టింగ్స్', companyName: 'కంపెనీ పేరు',
+    department: 'డిపార్ట్మెంట్ పేరు', taglineLbl: 'ట్యాగ్లైన్', allotter: 'కేటాయించే వ్యక్తి',
+    designation: 'హోదా', logo: 'కంపెనీ లోగో', uploadLogo: 'లోగో అప్లోడ్ చేయండి',
+    removeLogo: 'లోగో తొలగించండి',
+    noticeTitle: 'షిఫ్ట్ కేటాయింపు', dateLbl: 'తేదీ',
+    allottedBy: 'కేటాయించిన వారు', generatedAt: 'తయారైన సమయం', notesLbl: 'గమనికలు',
+    today: 'ఈరోజు', yesterday: 'నిన్న', older: 'పాత రికార్డులు',
+    view: 'చూడండి', load: 'లోడ్', reuse: 'మళ్లీ ఉపయోగించండి', close: 'మూసివేయండి', export: 'PNG ఎగుమతి',
+    noEmployees: 'ఇంకా ఉద్యోగులు లేరు. ముందుగా జోడించండి.',
+    noHistory: 'ఇంకా సేవ్ చేసిన షెడ్యూల్ లేదు.',
+    copied: 'క్లిప్బోర్డ్కు కాపీ అయింది', loaded: 'షెడ్యూల్ లోడ్ అయింది',
+    noPrev: 'మునుపటి షెడ్యూల్ కనుగొనబడలేదు', savedToHistory: 'చరిత్రలో సేవ్ అయింది',
+    settingsSaved: 'సెట్టింగ్స్ సేవ్ అయ్యాయి', logoRemoved: 'లోగో తొలగించబడింది',
+    added: 'జోడించబడింది', updated: 'నవీకరించబడింది', removed: 'తొలగించబడింది',
+    confirmDelete: 'ఈ ఉద్యోగిని తొలగించాలా?', historyView: 'సేవ్ చేసిన షెడ్యూల్'
   }
 };
 
 /* -------------------- App state -------------------- */
 
 let state = {
-  lang:'en',
-  employees:[],
-  company:'Milk Processing Unit',
-  department:'Processing Department',
-  tagline:'',
-  logo:null,
-  allotter:'Sudhakar Batta',
-  designation:'Shift Executive',
-  assignments:{},   // employee name -> shift id ('na' = not assigned)
-  notes:'',
-  date:'',
-  history:[]        // { id, date, assignments, notes, savedAt }
+  lang: 'en',
+  employees: [],
+  company: 'Milk Processing Unit',
+  department: 'Processing Department',
+  tagline: '',
+  logo: null,
+  allotter: 'Sudhakar Batta',
+  designation: 'Shift Executive',
+  assignments: {},   // employee name -> shift id ('na' = not assigned)
+  notes: '',
+  date: '',
+  history: []        // { id, date, assignments, notes, savedAt }
 };
 let currentViewingRecord = null;
 let toastTimer = null;
@@ -143,14 +144,12 @@ function t(key){
 }
 function applyLanguage(){
   document.documentElement.lang = state.lang;
-  // Static labels marked with data-i18n
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
   });
   document.getElementById('langToggle').textContent = state.lang === 'en' ? 'తెలుగు' : 'English';
   document.getElementById('notesInput').placeholder = t('notesPh');
   document.getElementById('newEmployeeInput').placeholder = t('empNamePh');
-  // Re-render dynamic, language-dependent content
   renderEmployees();
   renderAssignmentList();
   renderCounters();
@@ -162,34 +161,34 @@ function applyLanguage(){
 
 function toISO(d){
   return d.getFullYear() + '-' +
-    String(d.getMonth()+1).padStart(2,'0') + '-' +
-    String(d.getDate()).padStart(2,'0');
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
 }
 function todayStr(){ return toISO(new Date()); }
-function yesterdayStr(){ const d = new Date(); d.setDate(d.getDate()-1); return toISO(d); }
+function yesterdayStr(){ const d = new Date(); d.setDate(d.getDate() - 1); return toISO(d); }
 function parseDateStr(s){
   if (!s) return null;
   const p = s.split('-').map(Number);
-  return new Date(p[0], p[1]-1, p[2]);
+  return new Date(p[0], p[1] - 1, p[2]);
 }
 function fmtDate(input){
   const d = (input instanceof Date) ? input : parseDateStr(input);
   if (!d || isNaN(d)) return '—';
-  return String(d.getDate()).padStart(2,'0') + '/' +
-         String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+  return String(d.getDate()).padStart(2, '0') + '/' +
+         String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
 }
 function formatTime(d){
   let h = d.getHours(), m = d.getMinutes();
   const ap = h >= 12 ? 'PM' : 'AM';
   h = h % 12 || 12;
-  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ' ' + ap;
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' ' + ap;
 }
 
 /* -------------------- Misc helpers -------------------- */
 
 function escapeHtml(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
-    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
   ));
 }
 function showToast(msg){
@@ -210,7 +209,7 @@ function switchTab(id){
 /* -------------------- Shift counting -------------------- */
 
 function countShiftsFor(assignments){
-  const c = { a:0, b:0, c:0, g:0, wo:0, lv:0 };
+  const c = { a: 0, b: 0, c: 0, g: 0, wo: 0, lv: 0 };
   Object.entries(assignments || {}).forEach(([, v]) => { if (c[v] !== undefined) c[v]++; });
   return c;
 }
@@ -240,11 +239,9 @@ function renderAssignmentList(){
     wrap.innerHTML = `<p class="empty-note">${t('noEmployees')}</p>`;
     return;
   }
-  const opts = SHIFTS.map(s => `<option value="${s.id}">${t(s.key)}</option>`).join('');
-  const naOpt = `<option value="${NA}">${t('notAssigned')}</option>`;
   wrap.innerHTML = state.employees.map((name, i) => {
     const val = state.assignments[name] || NA;
-    const selected = (id) => (val === id ? 'selected' : '');
+    const selected = id => (val === id ? 'selected' : '');
     return `
       <div class="assign-row">
         <span class="emp-name">${escapeHtml(name)}</span>
@@ -256,7 +253,7 @@ function renderAssignmentList(){
   }).join('');
 }
 
-/* -------------------- Notice rendering -------------------- */
+/* -------------------- Receipt rendering -------------------- */
 
 function renderNotice(){
   renderNoticeInto(document.getElementById('notice'), {
@@ -270,72 +267,64 @@ function renderNoticeInto(el, data, generatedAt){
   const counts = countShiftsFor(data.assignments);
   const dateStr = fmtDate(data.date);
   const now = generatedAt ? new Date(generatedAt) : new Date();
-  const tagline = (state.tagline && state.tagline.trim())
-    ? escapeHtml(state.tagline) : t('tagline');
 
-  // Logo: background-image div (html2canvas-safe, no object-fit)
+  // Logo: background-image div (html2canvas-safe). Omitted when none uploaded.
   const logoHtml = state.logo
-    ? `<div class="notice-logo" style="background-image:url('${state.logo}')"></div>`
-    : `<div class="notice-logo notice-logo-fallback">⚙</div>`;
+    ? `<div class="r-logo" style="background-image:url('${state.logo}')"></div>`
+    : '';
 
-  // Summary cards (always all six)
-  const cards = SHIFTS.map(s => `
-    <div class="sum-card sc-${s.id}">
-      <div class="s-num">${counts[s.id]}</div>
-      <div class="s-lbl">${t(s.key)}</div>
-    </div>`).join('');
+  // Compact summary: one line per row, monochrome
+  const sumLine1 = `A:<b>${counts.a}</b> &nbsp;|&nbsp; B:<b>${counts.b}</b> &nbsp;|&nbsp; C:<b>${counts.c}</b>`;
+  const sumLine2 = `G:<b>${counts.g}</b> &nbsp;|&nbsp; W/O:<b>${counts.wo}</b> &nbsp;|&nbsp; ${t('leave')}:<b>${counts.lv}</b>`;
 
-  // Shift sections — empty sections are hidden
+  // Shift sections — empty sections are skipped
   let sections = '';
   SHIFTS.forEach(s => {
     const names = assignedNames(data.assignments, s.id);
     if (!names.length) return;
     sections += `
-      <div class="shift-section sc-${s.id}">
-        <div class="ss-head">${t(s.key)}</div>
-        <div class="ss-body">${names.map(n => `<div class="emp-chip">${escapeHtml(n)}</div>`).join('')}</div>
+      <div class="r-sec sc-${s.id}">
+        <div class="r-sec-title">${t(s.key)}</div>
+        ${names.map(n => `<div class="r-name"><span class="r-dot">•</span>${escapeHtml(n)}</div>`).join('')}
       </div>`;
   });
 
-  // Notes — only if present
+  // Notes — only when present
   const notesHtml = (data.notes && data.notes.trim()) ? `
-    <div class="notice-notes">
-      <div class="notes-box">
-        <div class="notes-title">${t('notesLbl')}</div>
-        ${escapeHtml(data.notes.trim())}
-      </div>
+    <div class="r-notes">
+      <div class="r-notes-title">${t('notesLbl')}</div>
+      <div class="r-notes-body">${escapeHtml(data.notes.trim())}</div>
     </div>` : '';
 
   el.innerHTML = `
-    <div class="notice-header">
+    <div class="r-header">
       ${logoHtml}
-      <div class="notice-brand">
-        <h1>${escapeHtml(state.company || t('app'))}</h1>
-        <div class="notice-tagline">${tagline}</div>
-      </div>
+      <div class="r-company">${escapeHtml(state.company || t('app'))}</div>
+      <div class="r-dept">${escapeHtml(state.department || '')}</div>
+      <div class="r-title">${t('noticeTitle')}</div>
+      <div class="r-date">${t('dateLbl')} : ${dateStr}</div>
     </div>
-    <div class="notice-hazard"></div>
-    <div class="notice-dept">${escapeHtml(state.department || '—')}</div>
-    <div class="notice-meta">
-      <span class="notice-title">${t('noticeTitle')}</span>
-      <span class="notice-date">${t('dateLbl')}: ${dateStr}</span>
+    <div class="r-rule"></div>
+    <div class="r-summary">
+      <div class="r-sum-line">${sumLine1}</div>
+      <div class="r-sum-line">${sumLine2}</div>
     </div>
-    <div class="notice-summary">${cards}</div>
-    <div class="notice-sections">${sections || `<div class="empty-note notice-empty">${t('empty')}</div>`}</div>
-    ${notesHtml}
-    <div class="notice-footer">
-      <div class="foot-block">
-        <div class="foot-label">${t('allottedBy')}</div>
-        <div class="foot-name">${escapeHtml(state.allotter || '—')}</div>
-        <div class="foot-sub">${escapeHtml(state.designation || '')}</div>
+    <div class="r-rule"></div>
+    ${sections}
+    ${notesHtml ? `<div class="r-rule"></div>${notesHtml}` : ''}
+    <div class="r-rule"></div>
+    <div class="r-footer">
+      <div class="r-foot-col">
+        <div class="r-foot-label">${t('allottedBy')}</div>
+        <div class="r-foot-val">${escapeHtml(state.allotter || '—')}</div>
+        <div class="r-foot-sub">${escapeHtml(state.designation || '')}</div>
       </div>
-      <div class="foot-block right">
-        <div class="foot-label">${t('generatedAt')}</div>
-        <div class="foot-name">${formatTime(now)}</div>
-        <div class="foot-sub">${fmtDate(now)}</div>
+      <div class="r-foot-col right">
+        <div class="r-foot-label">${t('generatedAt')}</div>
+        <div class="r-foot-val">${formatTime(now)}</div>
+        <div class="r-foot-sub">${fmtDate(now)}</div>
       </div>
-    </div>
-    <div class="notice-hazard"></div>`;
+    </div>`;
 }
 
 /* -------------------- Export: PNG (html2canvas) -------------------- */
@@ -348,41 +337,81 @@ function waitForImages(root){
   }));
 }
 
-async function exportPNG(sourceEl, dateForName){
-  if (typeof html2canvas === 'undefined'){ showToast('html2canvas not loaded'); return; }
-  showToast('Generating…');
-
-  // Clone off-screen at a fixed export width for consistent quality
+/* Build a high-quality PNG canvas from a rendered notice element.
+   Renders an off-screen clone at the fixed 460px receipt width. */
+async function buildPNGCanvas(sourceEl){
+  if (typeof html2canvas === 'undefined') throw new Error('html2canvas not loaded');
   const holder = document.createElement('div');
-  holder.style.cssText = 'position:fixed;left:-9999px;top:0;width:820px;z-index:-1;';
+  holder.style.cssText = 'position:fixed;left:-9999px;top:0;width:460px;z-index:-1;';
   const clone = sourceEl.cloneNode(true);
   clone.style.width = '100%';
   holder.appendChild(clone);
   document.body.appendChild(holder);
-
   try{
     await waitForImages(clone);
-    const canvas = await html2canvas(clone, {
-      scale: 2,               // high quality
-      backgroundColor: '#f6f4ef',
+    if (document.fonts && document.fonts.ready) await document.fonts.ready; // Inter loaded
+    return await html2canvas(clone, {
+      scale: 2,
+      backgroundColor: '#ffffff',
       useCORS: true,
       logging: false
     });
-    const fname = 'Shift-Allotment-' + fmtDate(dateForName).replace(/\//g, '-') + '.png';
+  }finally{
+    document.body.removeChild(holder);
+  }
+}
+
+function noticeFilename(dateForName){
+  return 'Shift-Allotment-' + fmtDate(dateForName).replace(/\//g, '-') + '.png';
+}
+
+/* Download as PNG */
+async function exportPNG(sourceEl, dateForName){
+  showToast('Generating…');
+  try{
+    const canvas = await buildPNGCanvas(sourceEl);
     const link = document.createElement('a');
-    link.download = fname;
+    link.download = noticeFilename(dateForName);
     link.href = canvas.toDataURL('image/png');
     link.click();
     showToast('PNG saved 📷');
   }catch(err){
     console.error(err);
     showToast('Export failed');
-  }finally{
-    document.body.removeChild(holder);
   }
 }
 
-/* -------------------- Export: copy plain text -------------------- */
+/* Native share (WhatsApp, etc.) via Web Share API — falls back to download */
+async function sharePNG(sourceEl, dateForName){
+  showToast('Generating…');
+  try{
+    const canvas = await buildPNGCanvas(sourceEl);
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    if (!blob) throw new Error('toBlob failed');
+    const file = new File([blob], noticeFilename(dateForName), { type: 'image/png' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({
+        files: [file],
+        title: 'ShiftSnap — ' + fmtDate(dateForName),
+        text: t('shareText') + ' ' + fmtDate(dateForName)
+      });
+    }else{
+      // Fallback: sharing unsupported → download instead
+      const link = document.createElement('a');
+      link.download = noticeFilename(dateForName);
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('Sharing not supported — PNG downloaded');
+    }
+  }catch(err){
+    if (err && err.name === 'AbortError') return; // user dismissed the sheet
+    console.error(err);
+    showToast('Share failed');
+  }
+}
+
+/* -------------------- Copy plain text -------------------- */
 
 async function copyText(){
   const lines = [fmtDate(state.date), ''];
@@ -399,7 +428,6 @@ async function copyText(){
     await navigator.clipboard.writeText(txt);
     showToast(t('copied'));
   }catch(e){
-    // Fallback for older WebViews
     const ta = document.createElement('textarea');
     ta.value = txt;
     ta.style.cssText = 'position:fixed;opacity:0;';
@@ -560,7 +588,7 @@ function renderHistory(){
   }
   const today = todayStr(), yest = yesterdayStr();
   const groups = [
-    { label: t('today'),    filter: r => r.date === today },
+    { label: t('today'),     filter: r => r.date === today },
     { label: t('yesterday'), filter: r => r.date === yest },
     { label: t('older'),     filter: r => r.date !== today && r.date !== yest }
   ];
@@ -633,19 +661,18 @@ function copyYesterday(){
 /* -------------------- Persistence -------------------- */
 
 function loadState(){
-  state.lang       = loadLS(LS.lang, 'en');
-  state.employees  = loadLS(LS.employees, DEFAULT_EMPLOYEES.slice());
-  state.company    = loadLS(LS.company, 'Milk Processing Unit');
-  state.department = loadLS(LS.department, 'Processing Department');
-  state.tagline    = loadLS(LS.tagline, '');
-  state.allotter   = loadLS(LS.allotter, 'Sudhakar Batta');
-  state.designation= loadLS(LS.designation, 'Shift Executive');
-  state.assignments= loadLS(LS.assignments, {});
-  state.notes      = loadLS(LS.notes, '');
-  state.date       = loadLS(LS.date, todayStr());
-  state.history    = loadLS(LS.history, []);
-  state.logo       = getRaw(LS.logo);
-  // Ensure every employee has an assignment entry
+  state.lang        = loadLS(LS.lang, 'en');
+  state.employees   = loadLS(LS.employees, DEFAULT_EMPLOYEES.slice());
+  state.company     = loadLS(LS.company, 'Milk Processing Unit');
+  state.department  = loadLS(LS.department, 'Processing Department');
+  state.tagline     = loadLS(LS.tagline, '');
+  state.allotter    = loadLS(LS.allotter, 'Sudhakar Batta');
+  state.designation = loadLS(LS.designation, 'Shift Executive');
+  state.assignments = loadLS(LS.assignments, {});
+  state.notes       = loadLS(LS.notes, '');
+  state.date        = loadLS(LS.date, todayStr());
+  state.history     = loadLS(LS.history, []);
+  state.logo        = getRaw(LS.logo);
   state.employees.forEach(n => {
     if (state.assignments[n] === undefined) state.assignments[n] = NA;
   });
@@ -688,11 +715,15 @@ function wireEvents(){
     renderNotice();
   });
 
-  // Buttons
+  // Action buttons
   document.getElementById('copyYesterdayBtn').addEventListener('click', copyYesterday);
   document.getElementById('exportPngBtn').addEventListener('click', () => {
-    renderNotice();                       // refresh "Generated At"
+    renderNotice(); // refresh "Generated At"
     exportPNG(document.getElementById('notice'), state.date);
+  });
+  document.getElementById('sharePngBtn').addEventListener('click', () => {
+    renderNotice();
+    sharePNG(document.getElementById('notice'), state.date);
   });
   document.getElementById('copyTextBtn').addEventListener('click', copyText);
   document.getElementById('saveHistoryBtn').addEventListener('click', saveHistory);
@@ -790,6 +821,9 @@ function wireEvents(){
   document.getElementById('modalExport').addEventListener('click', () => {
     if (currentViewingRecord) exportPNG(document.getElementById('viewNotice'), currentViewingRecord.date);
   });
+  document.getElementById('modalShare').addEventListener('click', () => {
+    if (currentViewingRecord) sharePNG(document.getElementById('viewNotice'), currentViewingRecord.date);
+  });
 
   // Bottom navigation
   document.querySelectorAll('.nav-btn').forEach(b =>
@@ -807,6 +841,11 @@ function init(){
   loadSettingsInputs();
   applyLanguage();
   wireEvents();
+
+  // Hide Share buttons where native sharing isn't available
+  const shareSupported = !!(navigator.share && navigator.canShare);
+  document.getElementById('sharePngBtn').hidden = !shareSupported;
+  document.getElementById('modalShare').hidden = !shareSupported;
 }
 
 document.addEventListener('DOMContentLoaded', init);
