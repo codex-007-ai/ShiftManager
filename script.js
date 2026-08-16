@@ -157,6 +157,13 @@ function applyLanguage(){
   renderHistory();
 }
 
+function companyInitials(){
+  const words = (state.company || '').trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return 'SS';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
 /* -------------------- Date / time helpers -------------------- */
 
 function toISO(d){
@@ -270,8 +277,9 @@ function renderNoticeInto(el, data, generatedAt){
 
   // Logo: background-image div (html2canvas-safe). Omitted when none uploaded.
   const logoHtml = state.logo
-    ? `<div class="r-logo" style="background-image:url('${state.logo}')"></div>`
-    : '';
+  ? `<div class="r-logo" style="background-image:url('${state.logo}')"></div>`
+  : `<div class="r-logo r-logo-fallback">${escapeHtml(companyInitials())}</div>`;
+
 
   // Compact summary: one line per row, monochrome
   const sumLine1 = `A:<b>${counts.a}</b> &nbsp;|&nbsp; B:<b>${counts.b}</b> &nbsp;|&nbsp; C:<b>${counts.c}</b>`;
