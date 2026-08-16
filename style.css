@@ -219,7 +219,7 @@ textarea:focus{ outline:none; border-color:var(--yellow); }
    pseudo-elements (bullets are real spans). Colors only as accents.
    ============================================================ */
 .notice{
-  max-width:460px; margin:0 auto;
+  max-width:430px; margin:0 auto;
   background:#fff;
   border:1px solid #e2e2e2;
   border-radius:10px;
@@ -253,10 +253,10 @@ textarea:focus{ outline:none; border-color:var(--yellow); }
 .r-sec{ padding:12px 0; border-bottom:1px dashed #e8e8e8; }
 .r-sec:last-child{ border-bottom:none; }
 .r-sec-title{
-  font-size:14px; font-weight:800; letter-spacing:2px; color:var(--sc);
+  font-size:20px; font-weight:800; letter-spacing:2px; color:var(--sc);
   border-left:3px solid var(--sc); padding-left:8px; margin-bottom:8px; text-transform:uppercase;
 }
-.r-name{ font-size:16px; color:#222; padding:3px 0 3px 11px; line-height:1.5; }
+.r-name{ font-size: 25px; color:#222; padding:3px 0 3px 11px; line-height:1.5; }
 .r-dot{ color:#c0c0c0; margin-right:9px; }
 
 /* notes — hidden when empty (handled in JS) */
