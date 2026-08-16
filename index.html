@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#1b2a41">
-  <meta name="description" content="ShiftSnap — daily factory shift allotment notice generator">
+  <meta name="description" content="ShiftSnap — daily factory shift allotment receipt generator">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
   <title>ShiftSnap — Shift Allotment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -50,12 +52,13 @@
         </div>
 
         <div class="card">
-          <h2 data-i18n="preview">Notice Preview</h2>
+          <h2 data-i18n="preview">Receipt Preview</h2>
           <div id="notice" class="notice"></div>
         </div>
 
         <div class="export-bar">
           <button id="exportPngBtn" class="btn btn-primary" type="button">📷 <span data-i18n="exportPng">Export PNG</span></button>
+          <button id="sharePngBtn" class="btn btn-primary" type="button">📤 <span data-i18n="share">Share</span></button>
           <button id="copyTextBtn" class="btn btn-secondary" type="button">📋 <span data-i18n="copyText">Copy Text</span></button>
           <button id="saveHistoryBtn" class="btn btn-secondary" type="button">💾 <span data-i18n="saveToHistory">Save to History</span></button>
         </div>
@@ -137,6 +140,7 @@
         </div>
         <div class="modal-foot">
           <button id="modalExport" class="btn btn-primary" type="button">📷 <span data-i18n="export">Export PNG</span></button>
+          <button id="modalShare" class="btn btn-secondary" type="button">📤 <span data-i18n="share">Share</span></button>
         </div>
       </div>
     </div>
