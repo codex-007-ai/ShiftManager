@@ -8,131 +8,72 @@
 </head>
 <body>
 
-  <!-- ===== Top bar ===== -->
+  <!-- ===== Header ===== -->
   <header class="topbar">
     <div class="brand">
       <span class="brand-badge" aria-hidden="true">M</span>
       <div>
         <h1>Milk Shift Manager</h1>
-        <p>Daily Shift Allotment Notices</p>
+        <p>Shift Allotment Notice</p>
       </div>
     </div>
-    <button id="darkToggle" class="icon-btn" type="button" title="Toggle dark mode" aria-label="Toggle dark mode">☾</button>
   </header>
 
-  <!-- ===== Main two-column layout ===== -->
   <main class="app">
 
-    <!-- ========== LEFT : INPUT FORM ========== -->
-    <section class="panel form-panel">
-      <div class="panel-head">
-        <h2>Create Notice</h2>
+    <!-- ===== Date ===== -->
+    <section class="card">
+      <div class="field">
+        <label for="dateInput">Date</label>
+        <input type="date" id="dateInput" />
       </div>
-
-      <form id="noticeForm" autocomplete="off" novalidate>
-        <div class="field">
-          <label for="dateInput">Date</label>
-          <input type="date" id="dateInput" />
-        </div>
-
-        <div class="field">
-          <label for="unitName">Unit / Company Name</label>
-          <input type="text" id="unitName" maxlength="60" placeholder="MILK PROCESSING UNIT" />
-        </div>
-
-        <div class="field">
-          <label for="logoInput">Company Logo <span class="hint">(optional)</span></label>
-          <div class="logo-row">
-            <input type="file" id="logoInput" accept="image/*" hidden />
-            <button type="button" id="logoBtn" class="btn btn-ghost">Upload Logo</button>
-            <button type="button" id="logoClear" class="btn btn-ghost btn-sm" hidden>Remove</button>
-          </div>
-        </div>
-
-        <!-- Shift textareas (one employee per line) -->
-        <div class="field">
-          <label for="shiftA">A Shift Employees <span class="hint">(one per line)</span></label>
-          <textarea id="shiftA" rows="3" placeholder="Bhushan&#10;Ramesh"></textarea>
-        </div>
-
-        <div class="field">
-          <label for="shiftB">B Shift Employees <span class="hint">(one per line)</span></label>
-          <textarea id="shiftB" rows="3" placeholder="Nagu&#10;Gangaraju"></textarea>
-        </div>
-
-        <div class="field">
-          <label for="shiftC">C Shift Employees <span class="hint">(one per line)</span></label>
-          <textarea id="shiftC" rows="3" placeholder="Prasad&#10;Srinu"></textarea>
-        </div>
-
-        <div class="field">
-          <label for="shiftG">G Shift Employees <span class="hint">(one per line)</span></label>
-          <textarea id="shiftG" rows="3" placeholder="Rajkumar"></textarea>
-        </div>
-
-        <div class="field">
-          <label for="shiftOff">Weekly Off Employees <span class="hint">(one per line)</span></label>
-          <textarea id="shiftOff" rows="3" placeholder="Naidu"></textarea>
-        </div>
-
-        <div class="field">
-          <label for="shiftLeave">Leave Employees <span class="hint">(one per line)</span></label>
-          <textarea id="shiftLeave" rows="3" placeholder="Trinadh"></textarea>
-        </div>
-
-        <!-- Action buttons -->
-        <div class="actions">
-          <button type="button" id="downloadBtn" class="btn btn-primary">⬇ Download PNG</button>
-
-          <div class="btn-row">
-            <button type="button" id="copyBtn" class="btn btn-ghost">Copy Notice</button>
-            <button type="button" id="printBtn" class="btn btn-ghost">Print</button>
-            <button type="button" id="pdfBtn" class="btn btn-ghost">Export PDF</button>
-          </div>
-
-          <div class="btn-row">
-            <button type="button" id="archiveBtn" class="btn btn-ghost">Save to Archive</button>
-            <button type="button" id="clearBtn" class="btn btn-danger">Clear Form</button>
-          </div>
-        </div>
-      </form>
-
-      <!-- ===== Shift History Archive (bonus) ===== -->
-      <details class="history" id="historyBox">
-        <summary>
-          Shift History Archive
-          <span id="historyCount" class="count-badge">0</span>
-        </summary>
-        <input type="search" id="historySearch" placeholder="Search by name or date…" />
-        <div id="historyList" class="history-list"></div>
-        <p id="historyEmpty" class="empty">No saved notices yet.</p>
-      </details>
     </section>
 
-    <!-- ========== RIGHT : LIVE RECEIPT PREVIEW ========== -->
-    <section class="panel preview-panel">
-      <div class="panel-head">
-        <h2>Live Receipt Preview</h2>
-        <span class="live-dot" title="Updates as you type"></span>
+    <!-- ===== Employee assignments (dropdowns) ===== -->
+    <section class="card">
+      <div class="card-head">
+        <h2>Assign Employees</h2>
+        <span class="count-badge" id="assignedCount">0 assigned</span>
       </div>
+      <div id="employeeList" class="employee-list">
+        <!-- Rows are built by script.js from the EMPLOYEES array -->
+      </div>
+    </section>
 
+    <!-- ===== Action buttons ===== -->
+    <section class="actions">
+      <button type="button" id="generateBtn" class="btn btn-primary">⚡ Generate Receipt</button>
+      <div class="btn-row">
+        <button type="button" id="downloadBtn" class="btn btn-primary">⬇ Download PNG</button>
+        <button type="button" id="copyBtn" class="btn btn-ghost">Copy Text</button>
+      </div>
+      <div class="btn-row">
+        <button type="button" id="yesterdayBtn" class="btn btn-ghost">⏪ Load Yesterday's Shift</button>
+        <button type="button" id="clearBtn" class="btn btn-danger">Clear Assignments</button>
+      </div>
+    </section>
+
+    <!-- ===== Live receipt preview ===== -->
+    <section class="card preview-card">
+      <div class="card-head">
+        <h2>Receipt Preview</h2>
+        <span class="live-dot" title="Updates automatically"></span>
+      </div>
       <div class="preview-stage">
-        <!-- This exact element is captured for PNG/PDF export -->
+        <!-- This exact element is captured for PNG export -->
         <div id="receipt" class="receipt">
           <div id="receiptInner" class="receipt-inner"></div>
         </div>
       </div>
-
-      <p class="preview-note">Receipt updates as you type. Download as PNG to share on WhatsApp.</p>
+      <p class="preview-note">Download PNG and share it in your WhatsApp group.</p>
     </section>
   </main>
 
   <!-- Toast notifications -->
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
-  <!-- Third-party libraries (CDN) -->
+  <!-- html2canvas (CDN) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.13.0/html2pdf.bundle.min.js"></script>
 
   <!-- App logic -->
   <script src="script.js"></script>
