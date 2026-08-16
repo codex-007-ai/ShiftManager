@@ -304,6 +304,25 @@ textarea:focus{ outline:none; border-color:var(--yellow); }
 .h-notes{ font-size:12.5px; color:var(--muted); background:#f4f5f8; border-radius:8px; padding:8px 10px; margin-bottom:8px; white-space:pre-wrap; }
 .hist-actions{ display:flex; gap:6px; flex-wrap:wrap; }
 
+/* ---------- Site footer ---------- */
+.site-footer{
+  text-align:center;
+  padding:18px 16px 30px;
+  font-size:13px;
+  color:var(--muted);
+  display:flex; flex-direction:column; align-items:center;
+  gap:6px;
+}
+.site-footer a{
+  color:var(--navy);
+  font-weight:700;
+  text-decoration:none;
+  border-bottom:1.5px solid var(--yellow);
+  padding-bottom:2px;
+}
+.site-footer a:active{ opacity:.7; }
+
+
 /* ---------- Settings ---------- */
 .logo-row{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
 .file-btn{ cursor:pointer; }
