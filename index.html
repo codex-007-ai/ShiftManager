@@ -1,81 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Milk Shift Manager</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b2a41">
+  <meta name="description" content="ShiftSnap — daily factory shift allotment notice generator">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+  <title>ShiftSnap — Shift Allotment</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="app">
 
-  <!-- ===== Header ===== -->
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-badge" aria-hidden="true">M</span>
-      <div>
-        <h1>Milk Shift Manager</h1>
-        <p>Shift Allotment Notice</p>
+    <!-- ===== Top app bar ===== -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">⚙</span>
+        <span class="brand-name" data-i18n="app">ShiftSnap</span>
       </div>
-    </div>
-  </header>
+      <button id="langToggle" class="lang-btn" type="button">తెలుగు</button>
+    </header>
 
-  <main class="app">
+    <!-- ===== Screens ===== -->
+    <main id="screens">
 
-    <!-- ===== Date ===== -->
-    <section class="card">
-      <div class="field">
-        <label for="dateInput">Date</label>
-        <input type="date" id="dateInput" />
-      </div>
-    </section>
+      <!-- ---------- 1. Allotment ---------- -->
+      <section class="screen active" id="screen-allot">
+        <div class="card">
+          <label class="field-label" for="dateInput" data-i18n="date">Date</label>
+          <input type="date" id="dateInput" class="input">
+          <div class="row">
+            <button id="copyYesterdayBtn" class="btn btn-ghost" type="button">⏪ <span data-i18n="copyYesterday">Copy Yesterday</span></button>
+          </div>
+        </div>
 
-    <!-- ===== Employee assignments (dropdowns) ===== -->
-    <section class="card">
-      <div class="card-head">
-        <h2>Assign Employees</h2>
-        <span class="count-badge" id="assignedCount">0 assigned</span>
-      </div>
-      <div id="employeeList" class="employee-list">
-        <!-- Rows are built by script.js from the EMPLOYEES array -->
-      </div>
-    </section>
+        <div class="card">
+          <label class="field-label" for="notesInput" data-i18n="notes">Notes (optional)</label>
+          <textarea id="notesInput" rows="2"></textarea>
+        </div>
 
-    <!-- ===== Action buttons ===== -->
-    <section class="actions">
-      <button type="button" id="generateBtn" class="btn btn-primary">⚡ Generate Receipt</button>
-      <div class="btn-row">
-        <button type="button" id="downloadBtn" class="btn btn-primary">⬇ Download PNG</button>
-        <button type="button" id="copyBtn" class="btn btn-ghost">Copy Text</button>
-      </div>
-      <div class="btn-row">
-        <button type="button" id="yesterdayBtn" class="btn btn-ghost">⏪ Load Yesterday's Shift</button>
-        <button type="button" id="clearBtn" class="btn btn-danger">Clear Assignments</button>
-      </div>
-    </section>
+        <div class="card">
+          <h2 data-i18n="assignments">Shift Assignments</h2>
+          <div id="assignmentList"></div>
+        </div>
 
-    <!-- ===== Live receipt preview ===== -->
-    <section class="card preview-card">
-      <div class="card-head">
-        <h2>Receipt Preview</h2>
-        <span class="live-dot" title="Updates automatically"></span>
-      </div>
-      <div class="preview-stage">
-        <!-- This exact element is captured for PNG export -->
-        <div id="receipt" class="receipt">
-          <div id="receiptInner" class="receipt-inner"></div>
+        <div class="card">
+          <h2 data-i18n="shiftSummary">Shift Summary</h2>
+          <div id="counters" class="counters"></div>
+        </div>
+
+        <div class="card">
+          <h2 data-i18n="preview">Notice Preview</h2>
+          <div id="notice" class="notice"></div>
+        </div>
+
+        <div class="export-bar">
+          <button id="exportPngBtn" class="btn btn-primary" type="button">📷 <span data-i18n="exportPng">Export PNG</span></button>
+          <button id="copyTextBtn" class="btn btn-secondary" type="button">📋 <span data-i18n="copyText">Copy Text</span></button>
+          <button id="saveHistoryBtn" class="btn btn-secondary" type="button">💾 <span data-i18n="saveToHistory">Save to History</span></button>
+        </div>
+      </section>
+
+      <!-- ---------- 2. Employees ---------- -->
+      <section class="screen" id="screen-employees">
+        <div class="card">
+          <div class="add-row">
+            <input id="newEmployeeInput" class="input" type="text" autocomplete="off">
+            <button id="addEmployeeBtn" class="btn btn-primary" type="button">+ <span data-i18n="addEmployee">Add Employee</span></button>
+          </div>
+        </div>
+        <div class="card">
+          <div id="employeeList"></div>
+        </div>
+      </section>
+
+      <!-- ---------- 3. Settings ---------- -->
+      <section class="screen" id="screen-settings">
+        <div class="card">
+          <h2 data-i18n="companySettings">Company Settings</h2>
+
+          <label class="field-label" for="companyInput" data-i18n="companyName">Company Name</label>
+          <input id="companyInput" class="input" type="text">
+
+          <label class="field-label" for="deptInput" data-i18n="department">Department Name</label>
+          <input id="deptInput" class="input" type="text">
+
+          <label class="field-label" for="taglineInput" data-i18n="taglineLbl">Tagline</label>
+          <input id="taglineInput" class="input" type="text">
+
+          <label class="field-label" for="allotterInput" data-i18n="allotter">Allotter Name</label>
+          <input id="allotterInput" class="input" type="text">
+
+          <label class="field-label" for="designationInput" data-i18n="designation">Designation</label>
+          <input id="designationInput" class="input" type="text">
+
+          <label class="field-label" data-i18n="logo">Company Logo</label>
+          <div class="logo-row">
+            <label class="btn btn-ghost file-btn">
+              <span data-i18n="uploadLogo">Upload Logo</span>
+              <input type="file" id="logoInput" accept="image/*" hidden>
+            </label>
+            <button id="removeLogoBtn" class="btn btn-danger-ghost" type="button" hidden><span data-i18n="removeLogo">Remove Logo</span></button>
+          </div>
+          <div id="logoPreview" class="logo-preview" hidden><img id="logoPreviewImg" alt="logo"></div>
+
+          <button id="saveSettingsBtn" class="btn btn-primary btn-block" type="button"><span data-i18n="save">Save Settings</span></button>
+        </div>
+      </section>
+
+      <!-- ---------- 4. History ---------- -->
+      <section class="screen" id="screen-history">
+        <div class="card">
+          <h2 data-i18n="history">History</h2>
+          <div id="historyList"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== Bottom navigation ===== -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-screen="screen-allot" type="button"><span class="nav-ico">📋</span><span data-i18n="allot">Allot</span></button>
+      <button class="nav-btn" data-screen="screen-employees" type="button"><span class="nav-ico">👥</span><span data-i18n="employees">Employees</span></button>
+      <button class="nav-btn" data-screen="screen-settings" type="button"><span class="nav-ico">⚙️</span><span data-i18n="settings">Settings</span></button>
+      <button class="nav-btn" data-screen="screen-history" type="button"><span class="nav-ico">🕘</span><span data-i18n="history">History</span></button>
+    </nav>
+
+    <!-- ===== History view modal ===== -->
+    <div id="modalOverlay" class="modal-overlay" hidden>
+      <div class="modal">
+        <div class="modal-head">
+          <h3 id="modalTitle">Saved Schedule</h3>
+          <button id="modalClose" class="icon-btn" type="button">✖</button>
+        </div>
+        <div class="modal-body">
+          <div id="viewNotice" class="notice"></div>
+        </div>
+        <div class="modal-foot">
+          <button id="modalExport" class="btn btn-primary" type="button">📷 <span data-i18n="export">Export PNG</span></button>
         </div>
       </div>
-      <p class="preview-note">Download PNG and share it in your WhatsApp group.</p>
-    </section>
-  </main>
+    </div>
 
-  <!-- Toast notifications -->
-  <div id="toasts" class="toasts" aria-live="polite"></div>
+    <!-- ===== Toast ===== -->
+    <div id="toast" class="toast" hidden></div>
+  </div>
 
-  <!-- html2canvas (CDN) -->
+  <!-- html2canvas (CDN). For fully offline use, download this file next to index.html
+       and reference it as:  <script src="html2canvas.min.js"></script> -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-  <!-- App logic -->
   <script src="script.js"></script>
 </body>
 </html>
