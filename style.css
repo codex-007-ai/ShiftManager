@@ -98,6 +98,13 @@ textarea{
 }
 textarea:focus{ outline:none; border-color:var(--yellow); }
 
+.r-logo-fallback{
+  display:flex; align-items:center; justify-content:center;
+  background:#1b2a41; color:var(--yellow);
+  font-size:20px; font-weight:800; letter-spacing:1px;
+}
+
+
 /* ---------- Buttons ---------- */
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
