@@ -18,8 +18,8 @@ const LS = {
 const DEFAULT_LOGO_PATH = 'heritage-logo.png';
 
 
-const DEFAULT_EMPLOYEES = ['Bhushan','Ramesh','Nagu','Gangaraju','Prasad',
-  'Srinu','Venkatrao','Rajkumar','Naidu','Trinadh'];
+const DEFAULT_EMPLOYEES = ['P Nagabhushanam','D Ramesh',' DNagu','Gangaraju','M Prasad',
+  'G Srinu','B Venkatrao','Rajkumar','K Naidu','V Trinadh'];
 
 const SHIFTS = [
   { id:'a',  key:'shiftA',    color:'#2563EB' },
