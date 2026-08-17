@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0F172A">
-  <meta name="description" content="ShiftSnap — premium shift allocation for milk processing units">
+  <meta name="description" content="ShiftSnap V5 — shift allocation for Heritage Milk Processing Unit">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23FBBF24'/><text x='50' y='68' font-size='52' text-anchor='middle'>⚙</text></svg>">
-  <title>ShiftSnap — Shift Allocation</title>
+  <title>ShiftSnap V5 — Shift Duty Allocation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -20,8 +20,8 @@
         <div class="brand">
           <div class="brand-logo">⚙</div>
           <div class="brand-text">
-            <div class="brand-name" data-i18n="app">ShiftSnap</div>
-            <div class="brand-sub" data-i18n="subtitle">Milk Processing • Shift Allocation</div>
+            <div class="brand-name" data-i18n="app">ShiftSnap V5</div>
+            <div class="brand-sub" data-i18n="subtitle">Heritage Milk Processing Unit</div>
           </div>
         </div>
         <div class="header-actions">
@@ -57,9 +57,9 @@
           <textarea id="notesInput" rows="3"></textarea>
         </div>
 
-        <!-- Stats overview -->
+        <!-- Staff overview KPI -->
         <div class="card">
-          <h2 data-i18n="overview">Overview</h2>
+          <h2 data-i18n="overview">Staff Overview</h2>
           <div id="statsRow" class="stats-row"></div>
         </div>
 
@@ -86,21 +86,21 @@
           <div id="counters" class="counters"></div>
         </div>
 
-        <!-- Receipt preview -->
+        <!-- Duty card preview -->
         <div class="card receipt-card">
           <div class="card-head-row">
-            <h2 data-i18n="preview">Receipt Preview</h2>
+            <h2 data-i18n="preview">Duty Card Preview</h2>
             <button id="expandBtn" class="icon-btn" type="button" title="Expand">⤢</button>
           </div>
           <div id="notice" class="notice"></div>
         </div>
 
-        <!-- Actions -->
+        <!-- Bottom actions -->
         <div class="export-bar">
           <button id="exportPngBtn" class="btn btn-primary" type="button">📷 <span data-i18n="exportPng">Export PNG</span></button>
           <button id="sharePngBtn" class="btn btn-accent" type="button">📤 <span data-i18n="share">Share</span></button>
           <button id="copyTextBtn" class="btn btn-secondary" type="button">📋 <span data-i18n="copyText">Copy Text</span></button>
-          <button id="saveHistoryBtn" class="btn btn-secondary" type="button">💾 <span data-i18n="saveToHistory">Save to History</span></button>
+          <button id="saveHistoryBtn" class="btn btn-secondary" type="button">💾 <span data-i18n="saveToHistory">Save History</span></button>
         </div>
       </section>
 
@@ -137,7 +137,7 @@
           <label class="field-label" for="designationInput" data-i18n="designation">Designation</label>
           <input id="designationInput" class="input" type="text">
 
-          <label class="field-label" data-i18n="logo">Company Logo</label>
+          <label class="field-label" data-i18n="logo">Heritage Logo</label>
           <div class="logo-row">
             <label class="btn btn-ghost file-btn">
               <span data-i18n="uploadLogo">Upload Logo</span>
