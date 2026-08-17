@@ -14,9 +14,9 @@ const LS = {
   history:'ss_history', dark:'ss_dark'
 };
 
-/* Default Heritage logo — paste your base64 data URL here
-   (see: base64 -w0 heritage-logo.png) */
-const DEFAULT_LOGO = null; // e.g. 'data:image/png;base64,iVBORw0K...'
+/* Heritage logo file, committed to the repo root next to index.html */
+const DEFAULT_LOGO_PATH = 'heritage-logo.png';
+
 
 const DEFAULT_EMPLOYEES = ['Bhushan','Ramesh','Nagu','Gangaraju','Prasad',
   'Srinu','Venkatrao','Rajkumar','Naidu','Trinadh'];
@@ -205,6 +205,26 @@ function initials(name){
   return (w[0][0] + (w[1] ? w[1][0] : '')).toUpperCase();
 }
 function avatarColor(i){ return AVATAR_COLORS[i % AVATAR_COLORS.length]; }
+
+/* Load the Heritage logo straight from the repo file and convert it to a
+   data URL so html2canvas always renders it reliably. */
+async function loadDefaultLogo(){
+  // If the user has explicitly uploaded or removed a logo, respect that.
+  if (getRaw(LS.logo) !== null) return;
+  try{
+    const res = await fetch(DEFAULT_LOGO_PATH);
+    if (!res.ok) return;                       // file not found — keep monogram
+    const blob = await res.blob();
+    state.logo = await new Promise(resolve => {
+      const r = new FileReader();
+      r.onload  = () => resolve(r.result);
+      r.onerror = () => resolve(null);
+      r.readAsDataURL(blob);
+    });
+    if (state.logo){ loadSettingsInputs(); renderNotice(); }
+  }catch(e){ /* offline/file:// — monogram fallback stays */ }
+}
+
 
 /* -------------------- Duplicate-prevention --------------------
    Every employee has exactly one dropdown, so an employee can
@@ -703,7 +723,7 @@ function loadState(){
   state.date        = loadLS(LS.date, todayStr());
   state.history     = loadLS(LS.history, []);
   const savedLogo   = getRaw(LS.logo);
-  state.logo        = savedLogo === 'none' ? null : (savedLogo || DEFAULT_LOGO);
+  state.logo        = savedLogo === 'none' || savedLogo === null ? null : savedLogo;
   state.employees.forEach(n => { if (state.assignments[n] === undefined) state.assignments[n] = NA; });
   normalizeAssignments();
 }
@@ -896,6 +916,8 @@ function init(){
   loadSettingsInputs();
   applyLanguage();
   wireEvents();
+  loadDefaultLogo();
+
 
   const shareSupported = !!(navigator.share && navigator.canShare);
   document.getElementById('sharePngBtn').hidden = !shareSupported;
