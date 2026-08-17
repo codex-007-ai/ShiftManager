@@ -1,7 +1,7 @@
 /* ============================================================
-   ShiftSnap — premium shift allocation (pure frontend)
-   State in localStorage; receipt exported with html2canvas
-   and shared natively via the Web Share API.
+   ShiftSnap V5 — Heritage Milk Processing Unit
+   Shift duty allocation. Pure frontend — localStorage state,
+   html2canvas export, Web Share API for WhatsApp.
    ============================================================ */
 
 /* -------------------- Constants -------------------- */
@@ -14,12 +14,16 @@ const LS = {
   history:'ss_history', dark:'ss_dark'
 };
 
+/* Default Heritage logo — paste your base64 data URL here
+   (see: base64 -w0 heritage-logo.png) */
+const DEFAULT_LOGO = null; // e.g. 'data:image/png;base64,iVBORw0K...'
+
 const DEFAULT_EMPLOYEES = ['Bhushan','Ramesh','Nagu','Gangaraju','Prasad',
   'Srinu','Venkatrao','Rajkumar','Naidu','Trinadh'];
 
 const SHIFTS = [
   { id:'a',  key:'shiftA',    color:'#2563EB' },
-  { id:'b',  key:'shiftB',    color:'#10B981' },
+  { id:'b',  key:'shiftB',    color:'#1B7A43' },
   { id:'c',  key:'shiftC',    color:'#F97316' },
   { id:'g',  key:'shiftG',    color:'#7C3AED' },
   { id:'wo', key:'weeklyOff', color:'#64748B' },
@@ -27,25 +31,25 @@ const SHIFTS = [
 ];
 const NA = 'na';
 const SHORT = { a:'A', b:'B', c:'C', g:'G', wo:'W/O', lv:'LV' };
-const AVATAR_COLORS = ['#2563EB','#10B981','#F97316','#7C3AED','#0EA5E9','#EF4444','#F59E0B','#14B8A6','#8B5CF6','#64748B'];
+const AVATAR_COLORS = ['#2563EB','#1B7A43','#F97316','#7C3AED','#0EA5E9','#EF4444','#F59E0B','#14B8A6','#8B5CF6','#64748B'];
 
 /* -------------------- i18n -------------------- */
 
 const I18N = {
   en: {
-    app:'ShiftSnap', subtitle:'Milk Processing • Shift Allocation',
+    app:'ShiftSnap V5', subtitle:'Heritage Milk Processing Unit',
     tagline:'QUALITY • HYGIENE • TRUST',
     allot:'Allot', employees:'Employees', settings:'Settings', history:'History',
     date:'Date', copyYesterday:'Copy Yesterday', notes:'Notes (optional)',
     notesPh:'Maintenance activity, cleaning work, special instructions…',
     quickActions:'Quick Actions', clearAll:'Clear All', cleared:'All assignments cleared',
-    overview:'Overview', totalStaff:'Total Staff', assigned:'Assigned',
-    weeklyOff:'Weekly Off', onLeave:'On Leave',
+    overview:'Staff Overview', totalStaff:'Total Staff', assigned:'Assigned',
+    weeklyOff:'Weekly Off', onLeave:'Leave',
     assignments:'Shift Assignments', shiftSummary:'Shift Summary',
-    preview:'Receipt Preview', expand:'Expand',
+    preview:'Duty Card Preview', expand:'Expand',
     searchPh:'Search employees…', all:'All', noMatch:'No matching employees',
     exportPng:'Export PNG', copyText:'Copy Text',
-    saveToHistory:'Save to History', share:'Share', shareText:'Shift Allotment',
+    saveToHistory:'Save History', share:'Share', shareText:'Shift Duty',
     addEmployee:'Add Employee', empNamePh:'Employee name',
     edit:'Edit', delete:'Delete', save:'Save Settings', cancel:'Cancel',
     notAssigned:'Not Assigned',
@@ -53,9 +57,9 @@ const I18N = {
     weeklyOff:'Weekly Off', leave:'Leave',
     companySettings:'Company Settings', companyName:'Company Name',
     department:'Department Name', taglineLbl:'Tagline', allotter:'Allotter Name',
-    designation:'Designation', logo:'Company Logo', uploadLogo:'Upload Logo',
+    designation:'Designation', logo:'Heritage Logo', uploadLogo:'Upload Logo',
     removeLogo:'Remove Logo',
-    noticeTitle:'SHIFT ALLOTMENT', dateLbl:'DATE',
+    noticeTitle:'SHIFT DUTY CARD', dateLbl:'Date',
     allottedBy:'ALLOTTED BY', generatedAt:'GENERATED AT', notesLbl:'NOTES',
     today:'Today', yesterday:'Yesterday', older:'Older Records',
     view:'View', load:'Load', reuse:'Reuse', close:'Close', export:'Export PNG',
@@ -68,19 +72,19 @@ const I18N = {
     confirmDelete:'Delete this employee?', historyView:'Saved Schedule'
   },
   te: {
-    app:'ShiftSnap', subtitle:'మిల్క్ ప్రాసెసింగ్ • షిఫ్ట్ కేటాయింపు',
+    app:'ShiftSnap V5', subtitle:'హెరిటేజ్ మిల్క్ ప్రాసెసింగ్ యూనిట్',
     tagline:'నాణ్యత • పరిశుభ్రత • విశ్వాసం',
     allot:'కేటాయింపు', employees:'ఉద్యోగులు', settings:'సెట్టింగ్స్', history:'చరిత్ర',
     date:'తేదీ', copyYesterday:'నిన్నటి కాపీ', notes:'గమనికలు (ఐచ్ఛికం)',
     notesPh:'నిర్వహణ పనులు, శుభ్రపరచడం, ప్రత్యేక సూచనలు…',
     quickActions:'త్వరిత చర్యలు', clearAll:'అన్నీ క్లియర్', cleared:'అన్ని కేటాయింపులు క్లియర్ అయ్యాయి',
-    overview:'సారాంశం', totalStaff:'మొత్తం సిబ్బంది', assigned:'కేటాయించినవారు',
-    weeklyOff:'వీక్లీ ఆఫ్', onLeave:'సెలవులో ఉన్నవారు',
+    overview:'సిబ్బంది సారాంశం', totalStaff:'మొత్తం సిబ్బంది', assigned:'కేటాయించినవారు',
+    weeklyOff:'వీక్లీ ఆఫ్', onLeave:'సెలవు',
     assignments:'షిఫ్ట్ కేటాయింపులు', shiftSummary:'షిఫ్ట్ సారాంశం',
-    preview:'రసీదు ప్రివ్యూ', expand:'విస్తరించండి',
+    preview:'డ్యూటీ కార్డ్ ప్రివ్యూ', expand:'విస్తరించండి',
     searchPh:'ఉద్యోగులను వెతకండి…', all:'అన్నీ', noMatch:'సరిపోలిన ఉద్యోగులు లేరు',
     exportPng:'PNG డౌన్లోడ్', copyText:'టెక్స్ట్ కాపీ',
-    saveToHistory:'చరిత్రలో సేవ్', share:'షేర్', shareText:'షిఫ్ట్ కేటాయింపు',
+    saveToHistory:'చరిత్రలో సేవ్', share:'షేర్', shareText:'షిఫ్ట్ డ్యూటీ',
     addEmployee:'ఉద్యోగిని జోడించండి', empNamePh:'ఉద్యోగి పేరు',
     edit:'మార్చండి', delete:'తొలగించండి', save:'సేవ్ చేయండి', cancel:'రద్దు',
     notAssigned:'కేటాయించలేదు',
@@ -88,9 +92,9 @@ const I18N = {
     weeklyOff:'వీక్లీ ఆఫ్', leave:'సెలవు',
     companySettings:'కంపెనీ సెట్టింగ్స్', companyName:'కంపెనీ పేరు',
     department:'డిపార్ట్మెంట్ పేరు', taglineLbl:'ట్యాగ్లైన్', allotter:'కేటాయించే వ్యక్తి',
-    designation:'హోదా', logo:'కంపెనీ లోగో', uploadLogo:'లోగో అప్లోడ్ చేయండి',
+    designation:'హోదా', logo:'హెరిటేజ్ లోగో', uploadLogo:'లోగో అప్లోడ్ చేయండి',
     removeLogo:'లోగో తొలగించండి',
-    noticeTitle:'షిఫ్ట్ కేటాయింపు', dateLbl:'తేదీ',
+    noticeTitle:'షిఫ్ట్ డ్యూటీ కార్డ్', dateLbl:'తేదీ',
     allottedBy:'కేటాయించిన వారు', generatedAt:'తయారైన సమయం', notesLbl:'గమనికలు',
     today:'ఈరోజు', yesterday:'నిన్న', older:'పాత రికార్డులు',
     view:'చూడండి', load:'లోడ్', reuse:'మళ్లీ ఉపయోగించండి', close:'మూసివేయండి', export:'PNG ఎగుమతి',
@@ -110,9 +114,9 @@ let state = {
   lang:'en', dark:false,
   employees:[],
   company:'Milk Processing Unit',
-  department:'Processing Department',
+  department:'Heritage Dairy',
   tagline:'', logo:null,
-  allotter:'Sudhakar Batta', designation:'Shift Executive',
+  allotter:'Sudhakar Batta', designation:'Shift Supervisor',
   assignments:{}, notes:'', date:'', history:[],
   searchQuery:'', shiftFilter:'all'
 };
@@ -202,15 +206,28 @@ function initials(name){
 }
 function avatarColor(i){ return AVATAR_COLORS[i % AVATAR_COLORS.length]; }
 
-/* -------------------- Shift counting -------------------- */
+/* -------------------- Duplicate-prevention --------------------
+   Every employee has exactly one dropdown, so an employee can
+   never appear in two shifts. As an extra safeguard we:
+   1) normalize all assignments on load (valid ids only), and
+   2) dedupe names when rendering each section.
+   ------------------------------------------------------------- */
 
-function countShiftsFor(assignments){
-  const c = { a:0, b:0, c:0, g:0, wo:0, lv:0 };
-  Object.entries(assignments || {}).forEach(([, v]) => { if (c[v] !== undefined) c[v]++; });
-  return c;
+function normalizeAssignments(){
+  const valid = new Set(SHIFTS.map(s => s.id));
+  state.employees.forEach(n => {
+    const v = state.assignments[n];
+    if (!valid.has(v)) state.assignments[n] = NA;
+  });
 }
+
 function assignedNames(assignments, shiftId){
-  return Object.entries(assignments || {}).filter(([, v]) => v === shiftId).map(([n]) => n);
+  const seen = new Set();
+  const out = [];
+  Object.entries(assignments || {}).forEach(([n, v]) => {
+    if (v === shiftId && !seen.has(n)){ seen.add(n); out.push(n); }
+  });
+  return out;
 }
 
 /* -------------------- Live renders -------------------- */
@@ -224,6 +241,12 @@ function renderCounters(){
       <div class="num">${counts[s.id]}</div>
       <div class="lbl">${t(s.key)}</div>
     </div>`).join('');
+}
+
+function countShiftsFor(assignments){
+  const c = { a:0, b:0, c:0, g:0, wo:0, lv:0 };
+  Object.entries(assignments || {}).forEach(([, v]) => { if (c[v] !== undefined) c[v]++; });
+  return c;
 }
 
 function renderStats(){
@@ -308,7 +331,7 @@ function clearAllAssignments(){
   showToast(t('cleared'));
 }
 
-/* -------------------- Receipt rendering -------------------- */
+/* -------------------- Shift Duty Card rendering -------------------- */
 
 function companyInitials(){
   const words = (state.company || '').trim().split(/\s+/).filter(Boolean);
@@ -332,9 +355,6 @@ function renderNoticeInto(el, data, generatedAt){
     ? `<div class="r-logo" style="background-image:url('${state.logo}')"></div>`
     : `<div class="r-logo r-logo-fallback">${escapeHtml(companyInitials())}</div>`;
 
-  const sumLine1 = `A:<b>${counts.a}</b> &nbsp;|&nbsp; B:<b>${counts.b}</b> &nbsp;|&nbsp; C:<b>${counts.c}</b>`;
-  const sumLine2 = `G:<b>${counts.g}</b> &nbsp;|&nbsp; W/O:<b>${counts.wo}</b> &nbsp;|&nbsp; ${t('leave')}:<b>${counts.lv}</b>`;
-
   let sections = '';
   SHIFTS.forEach(s => {
     const names = assignedNames(data.assignments, s.id);
@@ -356,17 +376,11 @@ function renderNoticeInto(el, data, generatedAt){
     <div class="r-header">
       ${logoHtml}
       <div class="r-company">${escapeHtml(state.company || t('app'))}</div>
-      <div class="r-dept">${escapeHtml(state.department || '')}</div>
       <div class="r-title">${t('noticeTitle')}</div>
       <div class="r-date">${t('dateLbl')} : ${dateStr}</div>
     </div>
     <div class="r-rule"></div>
-    <div class="r-summary">
-      <div class="r-sum-line">${sumLine1}</div>
-      <div class="r-sum-line">${sumLine2}</div>
-    </div>
-    <div class="r-rule"></div>
-    ${sections}
+    ${sections || `<div class="empty-note">—</div>`}
     ${notesHtml ? `<div class="r-rule"></div>${notesHtml}` : ''}
     <div class="r-rule"></div>
     <div class="r-footer">
@@ -411,7 +425,7 @@ async function buildPNGCanvas(sourceEl){
 }
 
 function noticeFilename(dateForName){
-  return 'Shift-Allotment-' + fmtDate(dateForName).replace(/\//g, '-') + '.png';
+  return 'Shift-Duty-' + fmtDate(dateForName).replace(/\//g, '-') + '.png';
 }
 
 async function exportPNG(sourceEl, dateForName){
@@ -434,7 +448,7 @@ async function sharePNG(sourceEl, dateForName){
     if (!blob) throw new Error('toBlob failed');
     const file = new File([blob], noticeFilename(dateForName), { type:'image/png' });
     if (navigator.canShare && navigator.canShare({ files:[file] })){
-      await navigator.share({ files:[file], title:'ShiftSnap — ' + fmtDate(dateForName), text:t('shareText') + ' ' + fmtDate(dateForName) });
+      await navigator.share({ files:[file], title:'ShiftSnap V5 — ' + fmtDate(dateForName), text:t('shareText') + ' ' + fmtDate(dateForName) });
     }else{
       const link = document.createElement('a');
       link.download = noticeFilename(dateForName);
@@ -656,6 +670,7 @@ function loadRecord(record){
   state.date = record.date;
   document.getElementById('dateInput').value = record.date;
   document.getElementById('notesInput').value = record.notes;
+  normalizeAssignments();
   persistData();
   renderAssignmentList();
   updateLive();
@@ -679,16 +694,18 @@ function loadState(){
   state.dark        = loadLS(LS.dark, false);
   state.employees   = loadLS(LS.employees, DEFAULT_EMPLOYEES.slice());
   state.company     = loadLS(LS.company, 'Milk Processing Unit');
-  state.department  = loadLS(LS.department, 'Processing Department');
+  state.department  = loadLS(LS.department, 'Heritage Dairy');
   state.tagline     = loadLS(LS.tagline, '');
   state.allotter    = loadLS(LS.allotter, 'Sudhakar Batta');
-  state.designation = loadLS(LS.designation, 'Shift Executive');
+  state.designation = loadLS(LS.designation, 'Shift Supervisor');
   state.assignments = loadLS(LS.assignments, {});
   state.notes       = loadLS(LS.notes, '');
   state.date        = loadLS(LS.date, todayStr());
   state.history     = loadLS(LS.history, []);
-  state.logo        = getRaw(LS.logo);
+  const savedLogo   = getRaw(LS.logo);
+  state.logo        = savedLogo === 'none' ? null : (savedLogo || DEFAULT_LOGO);
   state.employees.forEach(n => { if (state.assignments[n] === undefined) state.assignments[n] = NA; });
+  normalizeAssignments();
 }
 
 function persistData(){
@@ -755,7 +772,6 @@ function wireEvents(){
     document.getElementById('modalOverlay').hidden = false;
   });
 
-  // Search + filter
   document.getElementById('searchInput').addEventListener('input', e => {
     state.searchQuery = e.target.value;
     applyAssignmentFilter();
@@ -771,7 +787,6 @@ function wireEvents(){
     applyAssignmentFilter();
   });
 
-  // Employees
   document.getElementById('addEmployeeBtn').addEventListener('click', addEmployee);
   document.getElementById('newEmployeeInput').addEventListener('keydown', e => {
     if (e.key === 'Enter'){ e.preventDefault(); addEmployee(); }
@@ -787,7 +802,6 @@ function wireEvents(){
     else if (action === 'cancel') renderEmployees();
   });
 
-  // Assignments
   document.getElementById('assignmentList').addEventListener('change', e => {
     const sel = e.target;
     if (!sel.classList.contains('assign-select')) return;
@@ -798,7 +812,6 @@ function wireEvents(){
     updateLive();
   });
 
-  // Settings
   document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
   document.getElementById('logoInput').addEventListener('change', e => {
     const file = e.target.files[0];
@@ -829,13 +842,12 @@ function wireEvents(){
   });
   document.getElementById('removeLogoBtn').addEventListener('click', () => {
     state.logo = null;
-    setRaw(LS.logo, null);
+    setRaw(LS.logo, 'none');
     loadSettingsInputs();
     renderNotice();
     showToast(t('logoRemoved'));
   });
 
-  // History
   document.getElementById('historyList').addEventListener('click', e => {
     const btn = e.target.closest('.btn');
     if (!btn) return;
@@ -852,7 +864,6 @@ function wireEvents(){
     }
   });
 
-  // Modal
   document.getElementById('modalClose').addEventListener('click', () => {
     document.getElementById('modalOverlay').hidden = true;
   });
@@ -868,7 +879,6 @@ function wireEvents(){
     sharePNG(document.getElementById('viewNotice'), d);
   });
 
-  // Nav
   document.querySelectorAll('.nav-btn').forEach(b =>
     b.addEventListener('click', () => switchTab(b.dataset.screen)));
 }
