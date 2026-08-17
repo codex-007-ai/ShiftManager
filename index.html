@@ -3,62 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1b2a41">
-  <meta name="description" content="ShiftSnap — daily factory shift allotment receipt generator">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
-  <title>ShiftSnap — Shift Allotment</title>
+  <meta name="theme-color" content="#0F172A">
+  <meta name="description" content="ShiftSnap — premium shift allocation for milk processing units">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23FBBF24'/><text x='50' y='68' font-size='52' text-anchor='middle'>⚙</text></svg>">
+  <title>ShiftSnap — Shift Allocation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="app">
 
-    <!-- ===== Top app bar ===== -->
+    <!-- ===== Sticky header ===== -->
     <header class="app-header">
-      <div class="brand">
-        <span class="brand-icon">⚙</span>
-        <span class="brand-name" data-i18n="app">ShiftSnap</span>
+      <div class="header-top">
+        <div class="brand">
+          <div class="brand-logo">⚙</div>
+          <div class="brand-text">
+            <div class="brand-name" data-i18n="app">ShiftSnap</div>
+            <div class="brand-sub" data-i18n="subtitle">Milk Processing • Shift Allocation</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="darkToggle" class="icon-btn glass" type="button">🌙</button>
+          <button id="langToggle" class="lang-btn" type="button">తెలుగు</button>
+          <div class="avatar" title="PSN Chaitanya">PC</div>
+        </div>
       </div>
-      <button id="langToggle" class="lang-btn" type="button">తెలుగు</button>
+      <div class="header-date">
+        <span class="date-icon">📅</span>
+        <input type="date" id="dateInput" class="date-pill">
+      </div>
     </header>
 
     <!-- ===== Screens ===== -->
     <main id="screens">
 
-      <!-- ---------- 1. Allotment ---------- -->
+      <!-- ---------- 1. Allot ---------- -->
       <section class="screen active" id="screen-allot">
+
+        <!-- Quick actions -->
         <div class="card">
-          <label class="field-label" for="dateInput" data-i18n="date">Date</label>
-          <input type="date" id="dateInput" class="input">
-          <div class="row">
+          <h2 data-i18n="quickActions">Quick Actions</h2>
+          <div class="quick-actions">
             <button id="copyYesterdayBtn" class="btn btn-ghost" type="button">⏪ <span data-i18n="copyYesterday">Copy Yesterday</span></button>
+            <button id="clearAllBtn" class="btn btn-danger-ghost" type="button">🗑 <span data-i18n="clearAll">Clear All</span></button>
           </div>
         </div>
 
+        <!-- Notes -->
         <div class="card">
           <label class="field-label" for="notesInput" data-i18n="notes">Notes (optional)</label>
-          <textarea id="notesInput" rows="2"></textarea>
+          <textarea id="notesInput" rows="3"></textarea>
         </div>
 
+        <!-- Stats overview -->
         <div class="card">
-          <h2 data-i18n="assignments">Shift Assignments</h2>
-          <div id="assignmentList"></div>
+          <h2 data-i18n="overview">Overview</h2>
+          <div id="statsRow" class="stats-row"></div>
         </div>
 
+        <!-- Shift assignments -->
+        <div class="card">
+          <div class="card-head-row">
+            <h2 data-i18n="assignments">Shift Assignments</h2>
+          </div>
+          <div class="search-row">
+            <div class="search-box">
+              <span class="search-ico">🔍</span>
+              <input id="searchInput" class="search-input" type="text" autocomplete="off">
+            </div>
+            <button id="filterToggle" class="icon-btn" type="button" title="Filter">⚙</button>
+          </div>
+          <div id="filterChips" class="filter-chips" hidden></div>
+          <div id="assignmentList"></div>
+          <div id="assignEmpty" class="empty-note" style="display:none;"></div>
+        </div>
+
+        <!-- Shift summary -->
         <div class="card">
           <h2 data-i18n="shiftSummary">Shift Summary</h2>
           <div id="counters" class="counters"></div>
         </div>
 
-        <div class="card">
-          <h2 data-i18n="preview">Receipt Preview</h2>
+        <!-- Receipt preview -->
+        <div class="card receipt-card">
+          <div class="card-head-row">
+            <h2 data-i18n="preview">Receipt Preview</h2>
+            <button id="expandBtn" class="icon-btn" type="button" title="Expand">⤢</button>
+          </div>
           <div id="notice" class="notice"></div>
         </div>
 
+        <!-- Actions -->
         <div class="export-bar">
           <button id="exportPngBtn" class="btn btn-primary" type="button">📷 <span data-i18n="exportPng">Export PNG</span></button>
-          <button id="sharePngBtn" class="btn btn-primary" type="button">📤 <span data-i18n="share">Share</span></button>
+          <button id="sharePngBtn" class="btn btn-accent" type="button">📤 <span data-i18n="share">Share</span></button>
           <button id="copyTextBtn" class="btn btn-secondary" type="button">📋 <span data-i18n="copyText">Copy Text</span></button>
           <button id="saveHistoryBtn" class="btn btn-secondary" type="button">💾 <span data-i18n="saveToHistory">Save to History</span></button>
         </div>
@@ -122,10 +162,9 @@
 
     <!-- ===== Site footer ===== -->
     <footer class="site-footer">
-      <a href="https://github.com/codex-007-ai/ShiftManager" target="_blank" rel="noopener">View Source Code</a>
+      <a href="https://github.com/PSNChaitanya/shiftsnap" target="_blank" rel="noopener">View Source Code</a>
       <span>Created by PSN Chaitanya</span>
     </footer>
-
 
     <!-- ===== Bottom navigation ===== -->
     <nav class="bottom-nav">
@@ -135,7 +174,7 @@
       <button class="nav-btn" data-screen="screen-history" type="button"><span class="nav-ico">🕘</span><span data-i18n="history">History</span></button>
     </nav>
 
-    <!-- ===== History view modal ===== -->
+    <!-- ===== Preview / history modal ===== -->
     <div id="modalOverlay" class="modal-overlay" hidden>
       <div class="modal">
         <div class="modal-head">
@@ -147,7 +186,7 @@
         </div>
         <div class="modal-foot">
           <button id="modalExport" class="btn btn-primary" type="button">📷 <span data-i18n="export">Export PNG</span></button>
-          <button id="modalShare" class="btn btn-secondary" type="button">📤 <span data-i18n="share">Share</span></button>
+          <button id="modalShare" class="btn btn-accent" type="button">📤 <span data-i18n="share">Share</span></button>
         </div>
       </div>
     </div>
@@ -156,8 +195,7 @@
     <div id="toast" class="toast" hidden></div>
   </div>
 
-  <!-- html2canvas (CDN). For fully offline use, download this file next to index.html
-       and reference it as:  <script src="html2canvas.min.js"></script> -->
+  <!-- html2canvas (CDN). For offline use, download next to index.html and use src="html2canvas.min.js" -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="script.js"></script>
 </body>
