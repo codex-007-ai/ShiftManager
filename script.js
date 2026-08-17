@@ -1,119 +1,125 @@
 /* ============================================================
-   ShiftSnap — script.js
-   Daily factory shift allotment — pure frontend (no backend).
-   State lives in localStorage; the receipt is exported with
-   html2canvas and shared natively via the Web Share API.
+   ShiftSnap — premium shift allocation (pure frontend)
+   State in localStorage; receipt exported with html2canvas
+   and shared natively via the Web Share API.
    ============================================================ */
 
 /* -------------------- Constants -------------------- */
 
 const LS = {
-  employees: 'ss_employees', lang: 'ss_lang', company: 'ss_company',
-  department: 'ss_department', tagline: 'ss_tagline', logo: 'ss_logo',
-  allotter: 'ss_allotter', designation: 'ss_designation',
-  assignments: 'ss_assignments', notes: 'ss_notes', date: 'ss_date',
-  history: 'ss_history'
+  employees:'ss_employees', lang:'ss_lang', company:'ss_company',
+  department:'ss_department', tagline:'ss_tagline', logo:'ss_logo',
+  allotter:'ss_allotter', designation:'ss_designation',
+  assignments:'ss_assignments', notes:'ss_notes', date:'ss_date',
+  history:'ss_history', dark:'ss_dark'
 };
 
-const DEFAULT_EMPLOYEES = ['Bhushan', 'Ramesh', 'Nagu', 'Gangaraju', 'Prasad',
-  'Srinu', 'Venkatrao', 'Rajkumar', 'Naidu', 'Trinadh'];
+const DEFAULT_EMPLOYEES = ['Bhushan','Ramesh','Nagu','Gangaraju','Prasad',
+  'Srinu','Venkatrao','Rajkumar','Naidu','Trinadh'];
 
 const SHIFTS = [
-  { id: 'a',  key: 'shiftA',    color: 'var(--blue)'   },
-  { id: 'b',  key: 'shiftB',    color: 'var(--green)'  },
-  { id: 'c',  key: 'shiftC',    color: 'var(--orange)' },
-  { id: 'g',  key: 'shiftG',    color: 'var(--purple)' },
-  { id: 'wo', key: 'weeklyOff', color: 'var(--gray)'   },
-  { id: 'lv', key: 'leave',     color: 'var(--red)'    }
+  { id:'a',  key:'shiftA',    color:'#2563EB' },
+  { id:'b',  key:'shiftB',    color:'#10B981' },
+  { id:'c',  key:'shiftC',    color:'#F97316' },
+  { id:'g',  key:'shiftG',    color:'#7C3AED' },
+  { id:'wo', key:'weeklyOff', color:'#64748B' },
+  { id:'lv', key:'leave',     color:'#EF4444' }
 ];
-const NA = 'na'; // "Not Assigned"
-const SHORT = { a: 'A', b: 'B', c: 'C', g: 'G', wo: 'W/O', lv: 'LV' };
+const NA = 'na';
+const SHORT = { a:'A', b:'B', c:'C', g:'G', wo:'W/O', lv:'LV' };
+const AVATAR_COLORS = ['#2563EB','#10B981','#F97316','#7C3AED','#0EA5E9','#EF4444','#F59E0B','#14B8A6','#8B5CF6','#64748B'];
 
-/* -------------------- i18n dictionary -------------------- */
+/* -------------------- i18n -------------------- */
 
 const I18N = {
   en: {
-    app: 'ShiftSnap',
-    tagline: 'QUALITY • HYGIENE • TRUST',
-    allot: 'Allot', employees: 'Employees', settings: 'Settings', history: 'History',
-    date: 'Date', copyYesterday: 'Copy Yesterday', notes: 'Notes (optional)',
-    notesPh: 'Maintenance activity, cleaning work, special instructions…',
-    assignments: 'Shift Assignments', shiftSummary: 'Shift Summary',
-    preview: 'Receipt Preview', exportPng: 'Export PNG', copyText: 'Copy Text',
-    saveToHistory: 'Save to History', share: 'Share', shareText: 'Shift Allotment',
-    addEmployee: 'Add Employee', empNamePh: 'Employee name',
-    edit: 'Edit', delete: 'Delete', save: 'Save Settings', cancel: 'Cancel',
-    notAssigned: 'Not Assigned',
-    shiftA: 'A Shift', shiftB: 'B Shift', shiftC: 'C Shift', shiftG: 'G Shift',
-    weeklyOff: 'Weekly Off', leave: 'Leave',
-    companySettings: 'Company Settings', companyName: 'Company Name',
-    department: 'Department Name', taglineLbl: 'Tagline', allotter: 'Allotter Name',
-    designation: 'Designation', logo: 'Company Logo', uploadLogo: 'Upload Logo',
-    removeLogo: 'Remove Logo',
-    noticeTitle: 'SHIFT ALLOTMENT', dateLbl: 'DATE',
-    allottedBy: 'ALLOTTED BY', generatedAt: 'GENERATED AT', notesLbl: 'NOTES',
-    today: 'Today', yesterday: 'Yesterday', older: 'Older Records',
-    view: 'View', load: 'Load', reuse: 'Reuse', close: 'Close', export: 'Export PNG',
-    noEmployees: 'No employees yet. Add some first.',
-    noHistory: 'No saved schedules yet. Save one from the Allot tab.',
-    copied: 'Copied to clipboard', loaded: 'Schedule loaded',
-    noPrev: 'No previous schedule found', savedToHistory: 'Saved to history',
-    settingsSaved: 'Settings saved', logoRemoved: 'Logo removed',
-    added: 'Added', updated: 'Updated', removed: 'Removed',
-    confirmDelete: 'Delete this employee?', historyView: 'Saved Schedule'
+    app:'ShiftSnap', subtitle:'Milk Processing • Shift Allocation',
+    tagline:'QUALITY • HYGIENE • TRUST',
+    allot:'Allot', employees:'Employees', settings:'Settings', history:'History',
+    date:'Date', copyYesterday:'Copy Yesterday', notes:'Notes (optional)',
+    notesPh:'Maintenance activity, cleaning work, special instructions…',
+    quickActions:'Quick Actions', clearAll:'Clear All', cleared:'All assignments cleared',
+    overview:'Overview', totalStaff:'Total Staff', assigned:'Assigned',
+    weeklyOff:'Weekly Off', onLeave:'On Leave',
+    assignments:'Shift Assignments', shiftSummary:'Shift Summary',
+    preview:'Receipt Preview', expand:'Expand',
+    searchPh:'Search employees…', all:'All', noMatch:'No matching employees',
+    exportPng:'Export PNG', copyText:'Copy Text',
+    saveToHistory:'Save to History', share:'Share', shareText:'Shift Allotment',
+    addEmployee:'Add Employee', empNamePh:'Employee name',
+    edit:'Edit', delete:'Delete', save:'Save Settings', cancel:'Cancel',
+    notAssigned:'Not Assigned',
+    shiftA:'A Shift', shiftB:'B Shift', shiftC:'C Shift', shiftG:'G Shift',
+    weeklyOff:'Weekly Off', leave:'Leave',
+    companySettings:'Company Settings', companyName:'Company Name',
+    department:'Department Name', taglineLbl:'Tagline', allotter:'Allotter Name',
+    designation:'Designation', logo:'Company Logo', uploadLogo:'Upload Logo',
+    removeLogo:'Remove Logo',
+    noticeTitle:'SHIFT ALLOTMENT', dateLbl:'DATE',
+    allottedBy:'ALLOTTED BY', generatedAt:'GENERATED AT', notesLbl:'NOTES',
+    today:'Today', yesterday:'Yesterday', older:'Older Records',
+    view:'View', load:'Load', reuse:'Reuse', close:'Close', export:'Export PNG',
+    noEmployees:'No employees yet. Add some first.',
+    noHistory:'No saved schedules yet. Save one from the Allot tab.',
+    copied:'Copied to clipboard', loaded:'Schedule loaded',
+    noPrev:'No previous schedule found', savedToHistory:'Saved to history',
+    settingsSaved:'Settings saved', logoRemoved:'Logo removed',
+    added:'Added', updated:'Updated', removed:'Removed',
+    confirmDelete:'Delete this employee?', historyView:'Saved Schedule'
   },
   te: {
-    app: 'ShiftSnap',
-    tagline: 'నాణ్యత • పరిశుభ్రత • విశ్వాసం',
-    allot: 'కేటాయింపు', employees: 'ఉద్యోగులు', settings: 'సెట్టింగ్స్', history: 'చరిత్ర',
-    date: 'తేదీ', copyYesterday: 'నిన్నటి కాపీ', notes: 'గమనికలు (ఐచ్ఛికం)',
-    notesPh: 'నిర్వహణ పనులు, శుభ్రపరచడం, ప్రత్యేక సూచనలు…',
-    assignments: 'షిఫ్ట్ కేటాయింపులు', shiftSummary: 'షిఫ్ట్ సారాంశం',
-    preview: 'రసీదు ప్రివ్యూ', exportPng: 'PNG డౌన్లోడ్', copyText: 'టెక్స్ట్ కాపీ',
-    saveToHistory: 'చరిత్రలో సేవ్', share: 'షేర్', shareText: 'షిఫ్ట్ కేటాయింపు',
-    addEmployee: 'ఉద్యోగిని జోడించండి', empNamePh: 'ఉద్యోగి పేరు',
-    edit: 'మార్చండి', delete: 'తొలగించండి', save: 'సేవ్ చేయండి', cancel: 'రద్దు',
-    notAssigned: 'కేటాయించలేదు',
-    shiftA: 'ఎ షిఫ్ట్', shiftB: 'బి షిఫ్ట్', shiftC: 'సి షిఫ్ట్', shiftG: 'జి షిఫ్ట్',
-    weeklyOff: 'వీక్లీ ఆఫ్', leave: 'సెలవు',
-    companySettings: 'కంపెనీ సెట్టింగ్స్', companyName: 'కంపెనీ పేరు',
-    department: 'డిపార్ట్మెంట్ పేరు', taglineLbl: 'ట్యాగ్లైన్', allotter: 'కేటాయించే వ్యక్తి',
-    designation: 'హోదా', logo: 'కంపెనీ లోగో', uploadLogo: 'లోగో అప్లోడ్ చేయండి',
-    removeLogo: 'లోగో తొలగించండి',
-    noticeTitle: 'షిఫ్ట్ కేటాయింపు', dateLbl: 'తేదీ',
-    allottedBy: 'కేటాయించిన వారు', generatedAt: 'తయారైన సమయం', notesLbl: 'గమనికలు',
-    today: 'ఈరోజు', yesterday: 'నిన్న', older: 'పాత రికార్డులు',
-    view: 'చూడండి', load: 'లోడ్', reuse: 'మళ్లీ ఉపయోగించండి', close: 'మూసివేయండి', export: 'PNG ఎగుమతి',
-    noEmployees: 'ఇంకా ఉద్యోగులు లేరు. ముందుగా జోడించండి.',
-    noHistory: 'ఇంకా సేవ్ చేసిన షెడ్యూల్ లేదు.',
-    copied: 'క్లిప్బోర్డ్కు కాపీ అయింది', loaded: 'షెడ్యూల్ లోడ్ అయింది',
-    noPrev: 'మునుపటి షెడ్యూల్ కనుగొనబడలేదు', savedToHistory: 'చరిత్రలో సేవ్ అయింది',
-    settingsSaved: 'సెట్టింగ్స్ సేవ్ అయ్యాయి', logoRemoved: 'లోగో తొలగించబడింది',
-    added: 'జోడించబడింది', updated: 'నవీకరించబడింది', removed: 'తొలగించబడింది',
-    confirmDelete: 'ఈ ఉద్యోగిని తొలగించాలా?', historyView: 'సేవ్ చేసిన షెడ్యూల్'
+    app:'ShiftSnap', subtitle:'మిల్క్ ప్రాసెసింగ్ • షిఫ్ట్ కేటాయింపు',
+    tagline:'నాణ్యత • పరిశుభ్రత • విశ్వాసం',
+    allot:'కేటాయింపు', employees:'ఉద్యోగులు', settings:'సెట్టింగ్స్', history:'చరిత్ర',
+    date:'తేదీ', copyYesterday:'నిన్నటి కాపీ', notes:'గమనికలు (ఐచ్ఛికం)',
+    notesPh:'నిర్వహణ పనులు, శుభ్రపరచడం, ప్రత్యేక సూచనలు…',
+    quickActions:'త్వరిత చర్యలు', clearAll:'అన్నీ క్లియర్', cleared:'అన్ని కేటాయింపులు క్లియర్ అయ్యాయి',
+    overview:'సారాంశం', totalStaff:'మొత్తం సిబ్బంది', assigned:'కేటాయించినవారు',
+    weeklyOff:'వీక్లీ ఆఫ్', onLeave:'సెలవులో ఉన్నవారు',
+    assignments:'షిఫ్ట్ కేటాయింపులు', shiftSummary:'షిఫ్ట్ సారాంశం',
+    preview:'రసీదు ప్రివ్యూ', expand:'విస్తరించండి',
+    searchPh:'ఉద్యోగులను వెతకండి…', all:'అన్నీ', noMatch:'సరిపోలిన ఉద్యోగులు లేరు',
+    exportPng:'PNG డౌన్లోడ్', copyText:'టెక్స్ట్ కాపీ',
+    saveToHistory:'చరిత్రలో సేవ్', share:'షేర్', shareText:'షిఫ్ట్ కేటాయింపు',
+    addEmployee:'ఉద్యోగిని జోడించండి', empNamePh:'ఉద్యోగి పేరు',
+    edit:'మార్చండి', delete:'తొలగించండి', save:'సేవ్ చేయండి', cancel:'రద్దు',
+    notAssigned:'కేటాయించలేదు',
+    shiftA:'ఎ షిఫ్ట్', shiftB:'బి షిఫ్ట్', shiftC:'సి షిఫ్ట్', shiftG:'జి షిఫ్ట్',
+    weeklyOff:'వీక్లీ ఆఫ్', leave:'సెలవు',
+    companySettings:'కంపెనీ సెట్టింగ్స్', companyName:'కంపెనీ పేరు',
+    department:'డిపార్ట్మెంట్ పేరు', taglineLbl:'ట్యాగ్లైన్', allotter:'కేటాయించే వ్యక్తి',
+    designation:'హోదా', logo:'కంపెనీ లోగో', uploadLogo:'లోగో అప్లోడ్ చేయండి',
+    removeLogo:'లోగో తొలగించండి',
+    noticeTitle:'షిఫ్ట్ కేటాయింపు', dateLbl:'తేదీ',
+    allottedBy:'కేటాయించిన వారు', generatedAt:'తయారైన సమయం', notesLbl:'గమనికలు',
+    today:'ఈరోజు', yesterday:'నిన్న', older:'పాత రికార్డులు',
+    view:'చూడండి', load:'లోడ్', reuse:'మళ్లీ ఉపయోగించండి', close:'మూసివేయండి', export:'PNG ఎగుమతి',
+    noEmployees:'ఇంకా ఉద్యోగులు లేరు. ముందుగా జోడించండి.',
+    noHistory:'ఇంకా సేవ్ చేసిన షెడ్యూల్ లేదు.',
+    copied:'క్లిప్బోర్డ్కు కాపీ అయింది', loaded:'షెడ్యూల్ లోడ్ అయింది',
+    noPrev:'మునుపటి షెడ్యూల్ కనుగొనబడలేదు', savedToHistory:'చరిత్రలో సేవ్ అయింది',
+    settingsSaved:'సెట్టింగ్స్ సేవ్ అయ్యాయి', logoRemoved:'లోగో తొలగించబడింది',
+    added:'జోడించబడింది', updated:'నవీకరించబడింది', removed:'తొలగించబడింది',
+    confirmDelete:'ఈ ఉద్యోగిని తొలగించాలా?', historyView:'సేవ్ చేసిన షెడ్యూల్'
   }
 };
 
-/* -------------------- App state -------------------- */
+/* -------------------- State -------------------- */
 
 let state = {
-  lang: 'en',
-  employees: [],
-  company: 'Milk Processing Unit',
-  department: 'Processing Department',
-  tagline: '',
-  logo: null,
-  allotter: 'Sudhakar Batta',
-  designation: 'Shift Executive',
-  assignments: {},   // employee name -> shift id ('na' = not assigned)
-  notes: '',
-  date: '',
-  history: []        // { id, date, assignments, notes, savedAt }
+  lang:'en', dark:false,
+  employees:[],
+  company:'Milk Processing Unit',
+  department:'Processing Department',
+  tagline:'', logo:null,
+  allotter:'Sudhakar Batta', designation:'Shift Executive',
+  assignments:{}, notes:'', date:'', history:[],
+  searchQuery:'', shiftFilter:'all'
 };
 let currentViewingRecord = null;
 let toastTimer = null;
 
-/* -------------------- Storage helpers -------------------- */
+/* -------------------- Storage -------------------- */
 
 function saveLS(key, value){
   try{
@@ -122,10 +128,8 @@ function saveLS(key, value){
   }catch(e){ showToast('Storage full'); }
 }
 function loadLS(key, fallback){
-  try{
-    const v = localStorage.getItem(key);
-    return v === null ? fallback : JSON.parse(v);
-  }catch(e){ return fallback; }
+  try{ const v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); }
+  catch(e){ return fallback; }
 }
 function setRaw(key, value){
   try{
@@ -133,29 +137,178 @@ function setRaw(key, value){
     localStorage.setItem(key, value);
   }catch(e){ showToast('Storage full'); }
 }
-function getRaw(key){
-  try{ return localStorage.getItem(key); }catch(e){ return null; }
-}
+function getRaw(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
 
-/* -------------------- i18n helpers -------------------- */
+/* -------------------- i18n -------------------- */
 
 function t(key){
   return (I18N[state.lang] && I18N[state.lang][key]) || I18N.en[key] || key;
 }
 function applyLanguage(){
   document.documentElement.lang = state.lang;
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    el.textContent = t(el.dataset.i18n);
-  });
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.getElementById('langToggle').textContent = state.lang === 'en' ? 'తెలుగు' : 'English';
   document.getElementById('notesInput').placeholder = t('notesPh');
   document.getElementById('newEmployeeInput').placeholder = t('empNamePh');
+  document.getElementById('searchInput').placeholder = t('searchPh');
   renderEmployees();
   renderAssignmentList();
-  renderCounters();
-  renderNotice();
+  renderFilterChips();
+  updateLive();
   renderHistory();
 }
+
+/* -------------------- Date helpers -------------------- */
+
+function toISO(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function todayStr(){ return toISO(new Date()); }
+function yesterdayStr(){ const d = new Date(); d.setDate(d.getDate()-1); return toISO(d); }
+function parseDateStr(s){ if (!s) return null; const p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+function fmtDate(input){
+  const d = (input instanceof Date) ? input : parseDateStr(input);
+  if (!d || isNaN(d)) return '—';
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+}
+function formatTime(d){
+  let h = d.getHours(), m = d.getMinutes();
+  const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ' ' + ap;
+}
+
+/* -------------------- Misc helpers -------------------- */
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function showToast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 1800);
+}
+function switchTab(id){
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.screen === id));
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  window.scrollTo(0, 0);
+}
+function applyDark(){
+  document.body.classList.toggle('dark', state.dark);
+  document.getElementById('darkToggle').textContent = state.dark ? '☀️' : '🌙';
+}
+function initials(name){
+  const w = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!w.length) return '?';
+  return (w[0][0] + (w[1] ? w[1][0] : '')).toUpperCase();
+}
+function avatarColor(i){ return AVATAR_COLORS[i % AVATAR_COLORS.length]; }
+
+/* -------------------- Shift counting -------------------- */
+
+function countShiftsFor(assignments){
+  const c = { a:0, b:0, c:0, g:0, wo:0, lv:0 };
+  Object.entries(assignments || {}).forEach(([, v]) => { if (c[v] !== undefined) c[v]++; });
+  return c;
+}
+function assignedNames(assignments, shiftId){
+  return Object.entries(assignments || {}).filter(([, v]) => v === shiftId).map(([n]) => n);
+}
+
+/* -------------------- Live renders -------------------- */
+
+function updateLive(){ renderCounters(); renderStats(); renderNotice(); }
+
+function renderCounters(){
+  const counts = countShiftsFor(state.assignments);
+  document.getElementById('counters').innerHTML = SHIFTS.map(s => `
+    <div class="counter grad-${s.id}">
+      <div class="num">${counts[s.id]}</div>
+      <div class="lbl">${t(s.key)}</div>
+    </div>`).join('');
+}
+
+function renderStats(){
+  let a=0,b=0,c=0,g=0,wo=0,lv=0;
+  state.employees.forEach(n => {
+    const v = state.assignments[n] || NA;
+    if (v==='a') a++; else if (v==='b') b++; else if (v==='c') c++;
+    else if (v==='g') g++; else if (v==='wo') wo++; else if (v==='lv') lv++;
+  });
+  const tiles = [
+    { icon:'👥', cls:'ic-royal',   label:t('totalStaff'), value:state.employees.length },
+    { icon:'⚙️', cls:'ic-success', label:t('assigned'),   value:a+b+c+g },
+    { icon:'📅', cls:'ic-gray',    label:t('weeklyOff'),  value:wo },
+    { icon:'🏖️', cls:'ic-danger',  label:t('onLeave'),    value:lv }
+  ];
+  document.getElementById('statsRow').innerHTML = tiles.map(ti => `
+    <div class="stat-tile">
+      <div class="stat-icon ${ti.cls}">${ti.icon}</div>
+      <div class="stat-val">${ti.value}</div>
+      <div class="stat-lbl">${ti.label}</div>
+    </div>`).join('');
+}
+
+/* -------------------- Assignment list + search/filter -------------------- */
+
+function renderAssignmentList(){
+  const wrap = document.getElementById('assignmentList');
+  const empty = document.getElementById('assignEmpty');
+  if (!state.employees.length){
+    wrap.innerHTML = '';
+    empty.style.display = '';
+    empty.textContent = t('noEmployees');
+    return;
+  }
+  empty.style.display = 'none';
+  wrap.innerHTML = state.employees.map((name, i) => {
+    const val = state.assignments[name] || NA;
+    const selected = id => (val === id ? 'selected' : '');
+    return `
+      <div class="assign-row" data-index="${i}">
+        <div class="avatar-sm" style="background:${avatarColor(i)}">${initials(name)}</div>
+        <span class="emp-name">${escapeHtml(name)}</span>
+        <select class="assign-select" data-index="${i}">
+          <option value="${NA}" ${selected(NA)}>${t('notAssigned')}</option>
+          ${SHIFTS.map(s => `<option value="${s.id}" ${selected(s.id)}>${t(s.key)}</option>`).join('')}
+        </select>
+      </div>`;
+  }).join('');
+  applyAssignmentFilter();
+}
+
+function applyAssignmentFilter(){
+  const q = (state.searchQuery || '').toLowerCase().trim();
+  const f = state.shiftFilter || 'all';
+  let visible = 0;
+  document.querySelectorAll('#assignmentList .assign-row').forEach(row => {
+    const idx = +row.dataset.index;
+    const name = state.employees[idx];
+    const val = state.assignments[name] || NA;
+    const matchQ = !q || name.toLowerCase().includes(q);
+    const matchF = f === 'all' || (f === 'na' ? val === NA : val === f);
+    const show = matchQ && matchF;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  const empty = document.getElementById('assignEmpty');
+  if (empty){ empty.style.display = visible ? 'none' : ''; empty.textContent = t('noMatch'); }
+}
+
+function renderFilterChips(){
+  const opts = [{ id:'all', label:t('all') }, { id:'na', label:t('notAssigned') }]
+    .concat(SHIFTS.map(s => ({ id:s.id, label:t(s.key) })));
+  document.getElementById('filterChips').innerHTML = opts.map(o => `
+    <button class="chip ${state.shiftFilter === o.id ? 'active' : ''}" data-filter="${o.id}" type="button">${o.label}</button>`).join('');
+}
+
+function clearAllAssignments(){
+  state.employees.forEach(n => { state.assignments[n] = NA; });
+  persistData();
+  renderAssignmentList();
+  updateLive();
+  showToast(t('cleared'));
+}
+
+/* -------------------- Receipt rendering -------------------- */
 
 function companyInitials(){
   const words = (state.company || '').trim().split(/\s+/).filter(Boolean);
@@ -164,109 +317,9 @@ function companyInitials(){
   return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-/* -------------------- Date / time helpers -------------------- */
-
-function toISO(d){
-  return d.getFullYear() + '-' +
-    String(d.getMonth() + 1).padStart(2, '0') + '-' +
-    String(d.getDate()).padStart(2, '0');
-}
-function todayStr(){ return toISO(new Date()); }
-function yesterdayStr(){ const d = new Date(); d.setDate(d.getDate() - 1); return toISO(d); }
-function parseDateStr(s){
-  if (!s) return null;
-  const p = s.split('-').map(Number);
-  return new Date(p[0], p[1] - 1, p[2]);
-}
-function fmtDate(input){
-  const d = (input instanceof Date) ? input : parseDateStr(input);
-  if (!d || isNaN(d)) return '—';
-  return String(d.getDate()).padStart(2, '0') + '/' +
-         String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
-}
-function formatTime(d){
-  let h = d.getHours(), m = d.getMinutes();
-  const ap = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' ' + ap;
-}
-
-/* -------------------- Misc helpers -------------------- */
-
-function escapeHtml(s){
-  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-  ));
-}
-function showToast(msg){
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.hidden = false;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, 1800);
-}
-function switchTab(id){
-  document.querySelectorAll('.nav-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.screen === id));
-  document.querySelectorAll('.screen').forEach(s =>
-    s.classList.toggle('active', s.id === id));
-  window.scrollTo(0, 0);
-}
-
-/* -------------------- Shift counting -------------------- */
-
-function countShiftsFor(assignments){
-  const c = { a: 0, b: 0, c: 0, g: 0, wo: 0, lv: 0 };
-  Object.entries(assignments || {}).forEach(([, v]) => { if (c[v] !== undefined) c[v]++; });
-  return c;
-}
-function countShifts(){ return countShiftsFor(state.assignments); }
-function assignedNames(assignments, shiftId){
-  return Object.entries(assignments || {})
-    .filter(([, v]) => v === shiftId)
-    .map(([n]) => n);
-}
-
-/* -------------------- Live counters -------------------- */
-
-function renderCounters(){
-  const counts = countShifts();
-  document.getElementById('counters').innerHTML = SHIFTS.map(s => `
-    <div class="counter sc-${s.id}">
-      <span class="num">${counts[s.id]}</span>
-      <span class="lbl">${t(s.key)}</span>
-    </div>`).join('');
-}
-
-/* -------------------- Assignment list -------------------- */
-
-function renderAssignmentList(){
-  const wrap = document.getElementById('assignmentList');
-  if (!state.employees.length){
-    wrap.innerHTML = `<p class="empty-note">${t('noEmployees')}</p>`;
-    return;
-  }
-  wrap.innerHTML = state.employees.map((name, i) => {
-    const val = state.assignments[name] || NA;
-    const selected = id => (val === id ? 'selected' : '');
-    return `
-      <div class="assign-row">
-        <span class="emp-name">${escapeHtml(name)}</span>
-        <select class="assign-select" data-index="${i}">
-          <option value="${NA}" ${selected(NA)}>${t('notAssigned')}</option>
-          ${SHIFTS.map(s => `<option value="${s.id}" ${selected(s.id)}>${t(s.key)}</option>`).join('')}
-        </select>
-      </div>`;
-  }).join('');
-}
-
-/* -------------------- Receipt rendering -------------------- */
-
 function renderNotice(){
   renderNoticeInto(document.getElementById('notice'), {
-    date: state.date,
-    assignments: state.assignments,
-    notes: state.notes
+    date: state.date, assignments: state.assignments, notes: state.notes
   });
 }
 
@@ -275,17 +328,13 @@ function renderNoticeInto(el, data, generatedAt){
   const dateStr = fmtDate(data.date);
   const now = generatedAt ? new Date(generatedAt) : new Date();
 
-  // Logo: background-image div (html2canvas-safe). Omitted when none uploaded.
   const logoHtml = state.logo
-  ? `<div class="r-logo" style="background-image:url('${state.logo}')"></div>`
-  : `<div class="r-logo r-logo-fallback">${escapeHtml(companyInitials())}</div>`;
+    ? `<div class="r-logo" style="background-image:url('${state.logo}')"></div>`
+    : `<div class="r-logo r-logo-fallback">${escapeHtml(companyInitials())}</div>`;
 
-
-  // Compact summary: one line per row, monochrome
   const sumLine1 = `A:<b>${counts.a}</b> &nbsp;|&nbsp; B:<b>${counts.b}</b> &nbsp;|&nbsp; C:<b>${counts.c}</b>`;
   const sumLine2 = `G:<b>${counts.g}</b> &nbsp;|&nbsp; W/O:<b>${counts.wo}</b> &nbsp;|&nbsp; ${t('leave')}:<b>${counts.lv}</b>`;
 
-  // Shift sections — empty sections are skipped
   let sections = '';
   SHIFTS.forEach(s => {
     const names = assignedNames(data.assignments, s.id);
@@ -297,7 +346,6 @@ function renderNoticeInto(el, data, generatedAt){
       </div>`;
   });
 
-  // Notes — only when present
   const notesHtml = (data.notes && data.notes.trim()) ? `
     <div class="r-notes">
       <div class="r-notes-title">${t('notesLbl')}</div>
@@ -335,7 +383,7 @@ function renderNoticeInto(el, data, generatedAt){
     </div>`;
 }
 
-/* -------------------- Export: PNG (html2canvas) -------------------- */
+/* -------------------- Export / Share -------------------- */
 
 function waitForImages(root){
   const imgs = Array.from(root.querySelectorAll('img'));
@@ -345,8 +393,6 @@ function waitForImages(root){
   }));
 }
 
-/* Build a high-quality PNG canvas from a rendered notice element.
-   Renders an off-screen clone at the fixed 460px receipt width. */
 async function buildPNGCanvas(sourceEl){
   if (typeof html2canvas === 'undefined') throw new Error('html2canvas not loaded');
   const holder = document.createElement('div');
@@ -357,13 +403,8 @@ async function buildPNGCanvas(sourceEl){
   document.body.appendChild(holder);
   try{
     await waitForImages(clone);
-    if (document.fonts && document.fonts.ready) await document.fonts.ready; // Inter loaded
-    return await html2canvas(clone, {
-      scale: 2,
-      backgroundColor: '#ffffff',
-      useCORS: true,
-      logging: false
-    });
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    return await html2canvas(clone, { scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false });
   }finally{
     document.body.removeChild(holder);
   }
@@ -373,7 +414,6 @@ function noticeFilename(dateForName){
   return 'Shift-Allotment-' + fmtDate(dateForName).replace(/\//g, '-') + '.png';
 }
 
-/* Download as PNG */
 async function exportPNG(sourceEl, dateForName){
   showToast('Generating…');
   try{
@@ -383,29 +423,19 @@ async function exportPNG(sourceEl, dateForName){
     link.href = canvas.toDataURL('image/png');
     link.click();
     showToast('PNG saved 📷');
-  }catch(err){
-    console.error(err);
-    showToast('Export failed');
-  }
+  }catch(err){ console.error(err); showToast('Export failed'); }
 }
 
-/* Native share (WhatsApp, etc.) via Web Share API — falls back to download */
 async function sharePNG(sourceEl, dateForName){
   showToast('Generating…');
   try{
     const canvas = await buildPNGCanvas(sourceEl);
     const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
     if (!blob) throw new Error('toBlob failed');
-    const file = new File([blob], noticeFilename(dateForName), { type: 'image/png' });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })){
-      await navigator.share({
-        files: [file],
-        title: 'ShiftSnap — ' + fmtDate(dateForName),
-        text: t('shareText') + ' ' + fmtDate(dateForName)
-      });
+    const file = new File([blob], noticeFilename(dateForName), { type:'image/png' });
+    if (navigator.canShare && navigator.canShare({ files:[file] })){
+      await navigator.share({ files:[file], title:'ShiftSnap — ' + fmtDate(dateForName), text:t('shareText') + ' ' + fmtDate(dateForName) });
     }else{
-      // Fallback: sharing unsupported → download instead
       const link = document.createElement('a');
       link.download = noticeFilename(dateForName);
       link.href = canvas.toDataURL('image/png');
@@ -413,13 +443,13 @@ async function sharePNG(sourceEl, dateForName){
       showToast('Sharing not supported — PNG downloaded');
     }
   }catch(err){
-    if (err && err.name === 'AbortError') return; // user dismissed the sheet
+    if (err && err.name === 'AbortError') return;
     console.error(err);
     showToast('Share failed');
   }
 }
 
-/* -------------------- Copy plain text -------------------- */
+/* -------------------- Copy text -------------------- */
 
 async function copyText(){
   const lines = [fmtDate(state.date), ''];
@@ -431,23 +461,20 @@ async function copyText(){
     lines.push('');
   });
   const txt = lines.join('\n').trim();
-
   try{
     await navigator.clipboard.writeText(txt);
     showToast(t('copied'));
   }catch(e){
     const ta = document.createElement('textarea');
-    ta.value = txt;
-    ta.style.cssText = 'position:fixed;opacity:0;';
-    document.body.appendChild(ta);
-    ta.select();
+    ta.value = txt; ta.style.cssText = 'position:fixed;opacity:0;';
+    document.body.appendChild(ta); ta.select();
     try{ document.execCommand('copy'); showToast(t('copied')); }
     catch(_){ showToast('Copy failed'); }
     document.body.removeChild(ta);
   }
 }
 
-/* -------------------- Employee management -------------------- */
+/* -------------------- Employees -------------------- */
 
 function renderEmployees(){
   const wrap = document.getElementById('employeeList');
@@ -457,6 +484,7 @@ function renderEmployees(){
   }
   wrap.innerHTML = state.employees.map((name, i) => `
     <div class="emp-row" data-index="${i}">
+      <div class="avatar-sm" style="background:${avatarColor(i)}">${initials(name)}</div>
       <span class="emp-name">${escapeHtml(name)}</span>
       <div class="emp-actions">
         <button class="icon-btn" data-action="edit" data-index="${i}" type="button">✏️</button>
@@ -469,17 +497,13 @@ function addEmployee(){
   const input = document.getElementById('newEmployeeInput');
   const name = input.value.trim().replace(/\s+/g, ' ');
   if (!name) return;
-  if (state.employees.some(e => e.toLowerCase() === name.toLowerCase())){
-    showToast('Duplicate');
-    return;
-  }
+  if (state.employees.some(e => e.toLowerCase() === name.toLowerCase())){ showToast('Duplicate'); return; }
   state.employees.push(name);
   state.assignments[name] = NA;
   persistData();
   renderEmployees();
   renderAssignmentList();
-  renderCounters();
-  renderNotice();
+  updateLive();
   input.value = '';
   showToast(t('added'));
 }
@@ -503,13 +527,9 @@ function saveEdit(index){
   if (!input) return;
   const val = input.value.trim().replace(/\s+/g, ' ');
   if (!val){ renderEmployees(); return; }
-
   const oldName = state.employees[index];
   if (val !== oldName){
-    if (state.employees.some((e, i) => i !== index && e.toLowerCase() === val.toLowerCase())){
-      showToast('Duplicate');
-      return;
-    }
+    if (state.employees.some((e, i) => i !== index && e.toLowerCase() === val.toLowerCase())){ showToast('Duplicate'); return; }
     const asg = state.assignments[oldName] || NA;
     delete state.assignments[oldName];
     state.employees[index] = val;
@@ -518,7 +538,7 @@ function saveEdit(index){
   persistData();
   renderEmployees();
   renderAssignmentList();
-  renderNotice();
+  updateLive();
   showToast(t('updated'));
 }
 
@@ -530,8 +550,7 @@ function deleteEmployee(index){
   persistData();
   renderEmployees();
   renderAssignmentList();
-  renderCounters();
-  renderNotice();
+  updateLive();
   showToast(t('removed'));
 }
 
@@ -546,8 +565,7 @@ function loadSettingsInputs(){
   const lp = document.getElementById('logoPreview');
   const li = document.getElementById('logoPreviewImg');
   if (state.logo){
-    lp.hidden = false;
-    li.src = state.logo;
+    lp.hidden = false; li.src = state.logo;
     document.getElementById('removeLogoBtn').hidden = false;
   }else{
     lp.hidden = true;
@@ -562,7 +580,7 @@ function saveSettings(){
   state.allotter = document.getElementById('allotterInput').value.trim() || state.allotter;
   state.designation = document.getElementById('designationInput').value.trim() || state.designation;
   persistData();
-  renderNotice();
+  updateLive();
   showToast(t('settingsSaved'));
 }
 
@@ -576,12 +594,7 @@ function saveHistory(){
     rec.notes = state.notes;
     rec.savedAt = Date.now();
   }else{
-    state.history.unshift({
-      id: Date.now(), date,
-      assignments: { ...state.assignments },
-      notes: state.notes,
-      savedAt: Date.now()
-    });
+    state.history.unshift({ id:Date.now(), date, assignments:{ ...state.assignments }, notes:state.notes, savedAt:Date.now() });
   }
   persistData();
   renderHistory();
@@ -596,9 +609,9 @@ function renderHistory(){
   }
   const today = todayStr(), yest = yesterdayStr();
   const groups = [
-    { label: t('today'),     filter: r => r.date === today },
-    { label: t('yesterday'), filter: r => r.date === yest },
-    { label: t('older'),     filter: r => r.date !== today && r.date !== yest }
+    { label:t('today'),     filter:r => r.date === today },
+    { label:t('yesterday'), filter:r => r.date === yest },
+    { label:t('older'),     filter:r => r.date !== today && r.date !== yest }
   ];
   let html = '';
   groups.forEach(g => {
@@ -607,8 +620,7 @@ function renderHistory(){
     html += `<h3 class="hist-group">${g.label}</h3>`;
     items.forEach(r => {
       const counts = countShiftsFor(r.assignments);
-      const chips = SHIFTS.map(s =>
-        `<span class="h-chip sc-${s.id}">${SHORT[s.id]} ${counts[s.id]}</span>`).join('');
+      const chips = SHIFTS.map(s => `<span class="h-chip sc-${s.id}">${SHORT[s.id]} ${counts[s.id]}</span>`).join('');
       html += `
         <div class="hist-card">
           <div class="hist-head">
@@ -631,12 +643,9 @@ function renderHistory(){
 
 function showHistoryModal(record){
   currentViewingRecord = record;
-  document.getElementById('modalTitle').textContent =
-    t('historyView') + ' — ' + fmtDate(record.date);
+  document.getElementById('modalTitle').textContent = t('historyView') + ' — ' + fmtDate(record.date);
   renderNoticeInto(document.getElementById('viewNotice'), {
-    date: record.date,
-    assignments: record.assignments,
-    notes: record.notes
+    date:record.date, assignments:record.assignments, notes:record.notes
   }, record.savedAt);
   document.getElementById('modalOverlay').hidden = false;
 }
@@ -649,8 +658,7 @@ function loadRecord(record){
   document.getElementById('notesInput').value = record.notes;
   persistData();
   renderAssignmentList();
-  renderCounters();
-  renderNotice();
+  updateLive();
   switchTab('screen-allot');
   showToast(t('loaded'));
 }
@@ -658,9 +666,7 @@ function loadRecord(record){
 function copyYesterday(){
   let rec = state.history.find(r => r.date === yesterdayStr());
   if (!rec){
-    rec = [...state.history]
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .find(r => r.date < state.date);
+    rec = [...state.history].sort((a, b) => b.date.localeCompare(a.date)).find(r => r.date < state.date);
   }
   if (!rec){ showToast(t('noPrev')); return; }
   loadRecord(rec);
@@ -670,6 +676,7 @@ function copyYesterday(){
 
 function loadState(){
   state.lang        = loadLS(LS.lang, 'en');
+  state.dark        = loadLS(LS.dark, false);
   state.employees   = loadLS(LS.employees, DEFAULT_EMPLOYEES.slice());
   state.company     = loadLS(LS.company, 'Milk Processing Unit');
   state.department  = loadLS(LS.department, 'Processing Department');
@@ -681,13 +688,12 @@ function loadState(){
   state.date        = loadLS(LS.date, todayStr());
   state.history     = loadLS(LS.history, []);
   state.logo        = getRaw(LS.logo);
-  state.employees.forEach(n => {
-    if (state.assignments[n] === undefined) state.assignments[n] = NA;
-  });
+  state.employees.forEach(n => { if (state.assignments[n] === undefined) state.assignments[n] = NA; });
 }
 
 function persistData(){
   saveLS(LS.lang, state.lang);
+  saveLS(LS.dark, state.dark);
   saveLS(LS.employees, state.employees);
   saveLS(LS.company, state.company);
   saveLS(LS.department, state.department);
@@ -701,17 +707,20 @@ function persistData(){
   setRaw(LS.logo, state.logo);
 }
 
-/* -------------------- Event wiring -------------------- */
+/* -------------------- Events -------------------- */
 
 function wireEvents(){
-  // Language toggle
   document.getElementById('langToggle').addEventListener('click', () => {
     state.lang = state.lang === 'en' ? 'te' : 'en';
     saveLS(LS.lang, state.lang);
     applyLanguage();
   });
+  document.getElementById('darkToggle').addEventListener('click', () => {
+    state.dark = !state.dark;
+    saveLS(LS.dark, state.dark);
+    applyDark();
+  });
 
-  // Date / notes
   document.getElementById('dateInput').addEventListener('change', e => {
     state.date = e.target.value;
     saveLS(LS.date, state.date);
@@ -723,10 +732,11 @@ function wireEvents(){
     renderNotice();
   });
 
-  // Action buttons
   document.getElementById('copyYesterdayBtn').addEventListener('click', copyYesterday);
+  document.getElementById('clearAllBtn').addEventListener('click', clearAllAssignments);
+
   document.getElementById('exportPngBtn').addEventListener('click', () => {
-    renderNotice(); // refresh "Generated At"
+    renderNotice();
     exportPNG(document.getElementById('notice'), state.date);
   });
   document.getElementById('sharePngBtn').addEventListener('click', () => {
@@ -735,6 +745,31 @@ function wireEvents(){
   });
   document.getElementById('copyTextBtn').addEventListener('click', copyText);
   document.getElementById('saveHistoryBtn').addEventListener('click', saveHistory);
+
+  document.getElementById('expandBtn').addEventListener('click', () => {
+    currentViewingRecord = null;
+    renderNoticeInto(document.getElementById('viewNotice'), {
+      date:state.date, assignments:state.assignments, notes:state.notes
+    }, Date.now());
+    document.getElementById('modalTitle').textContent = t('preview');
+    document.getElementById('modalOverlay').hidden = false;
+  });
+
+  // Search + filter
+  document.getElementById('searchInput').addEventListener('input', e => {
+    state.searchQuery = e.target.value;
+    applyAssignmentFilter();
+  });
+  document.getElementById('filterToggle').addEventListener('click', () => {
+    document.getElementById('filterChips').hidden = !document.getElementById('filterChips').hidden;
+  });
+  document.getElementById('filterChips').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    state.shiftFilter = chip.dataset.filter;
+    renderFilterChips();
+    applyAssignmentFilter();
+  });
 
   // Employees
   document.getElementById('addEmployeeBtn').addEventListener('click', addEmployee);
@@ -752,7 +787,7 @@ function wireEvents(){
     else if (action === 'cancel') renderEmployees();
   });
 
-  // Assignment dropdowns (event delegation)
+  // Assignments
   document.getElementById('assignmentList').addEventListener('change', e => {
     const sel = e.target;
     if (!sel.classList.contains('assign-select')) return;
@@ -760,8 +795,7 @@ function wireEvents(){
     if (name === undefined) return;
     state.assignments[name] = sel.value;
     persistData();
-    renderCounters();
-    renderNotice();
+    updateLive();
   });
 
   // Settings
@@ -773,7 +807,6 @@ function wireEvents(){
     reader.onload = ev => {
       const img = new Image();
       img.onload = () => {
-        // Resize to max 256px so the base64 stays small for localStorage
         let w = img.width, h = img.height;
         const max = 256;
         if (w > max || h > max){
@@ -827,13 +860,15 @@ function wireEvents(){
     if (e.target.id === 'modalOverlay') e.target.hidden = true;
   });
   document.getElementById('modalExport').addEventListener('click', () => {
-    if (currentViewingRecord) exportPNG(document.getElementById('viewNotice'), currentViewingRecord.date);
+    const d = currentViewingRecord ? currentViewingRecord.date : state.date;
+    exportPNG(document.getElementById('viewNotice'), d);
   });
   document.getElementById('modalShare').addEventListener('click', () => {
-    if (currentViewingRecord) sharePNG(document.getElementById('viewNotice'), currentViewingRecord.date);
+    const d = currentViewingRecord ? currentViewingRecord.date : state.date;
+    sharePNG(document.getElementById('viewNotice'), d);
   });
 
-  // Bottom navigation
+  // Nav
   document.querySelectorAll('.nav-btn').forEach(b =>
     b.addEventListener('click', () => switchTab(b.dataset.screen)));
 }
@@ -842,15 +877,16 @@ function wireEvents(){
 
 function init(){
   loadState();
+  applyDark();
   document.getElementById('dateInput').value = state.date;
   document.getElementById('notesInput').value = state.notes;
   document.getElementById('notesInput').placeholder = t('notesPh');
   document.getElementById('newEmployeeInput').placeholder = t('empNamePh');
+  document.getElementById('searchInput').placeholder = t('searchPh');
   loadSettingsInputs();
   applyLanguage();
   wireEvents();
 
-  // Hide Share buttons where native sharing isn't available
   const shareSupported = !!(navigator.share && navigator.canShare);
   document.getElementById('sharePngBtn').hidden = !shareSupported;
   document.getElementById('modalShare').hidden = !shareSupported;
